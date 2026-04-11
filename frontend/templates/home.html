@@ -1,0 +1,357 @@
+{% extends "base.html" %}
+{% import "components/dashboard_macros.html" as ui %}
+
+{% block title %}Home - Raahi{% endblock %}
+{% block page_name %}home{% endblock %}
+{% block body_class %}dashboard-page workspace-user{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+    <aside class="sidebar">
+        <a href="/home" class="brand">
+            <img src="{{ url_for('static', filename='raahi_logo.png') }}" alt="Raahi" class="brand-mark">
+            <span class="brand-copy">
+                <strong>Raahi</strong>
+                <span>Mobility workspace</span>
+            </span>
+        </a>
+
+        <div class="workspace-switch surface-subtle">
+            <div class="sidebar-title">Workspace</div>
+            <div class="segmented workspace-tabs">
+                <button type="button" class="active">User View</button>
+                {% if current_user.is_admin %}
+                    <a href="/admin-dashboard" class="workspace-link">Admin Control</a>
+                {% else %}
+                    <span class="workspace-link is-disabled">Admin Control</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="sidebar-group">
+            <div class="sidebar-title">Menu</div>
+            <nav class="sidebar-nav">
+                <a href="/home" class="sidebar-link active">Overview</a>
+                <a href="/profile" class="sidebar-link">Profile</a>
+                <a href="/logout" class="sidebar-link">Sign Out</a>
+            </nav>
+        </div>
+
+        <div class="sidebar-group">
+            <div class="sidebar-title">Quick Actions</div>
+            <div class="stack">
+                <a href="/route-planner?dest=Bandra%20Station&lat={{ user_origin_lat if user_origin_lat is not none else 19.076 }}&lon={{ user_origin_lon if user_origin_lon is not none else 72.8777 }}" class="trip-card quick-link">
+                    <strong>Plan a fast route</strong>
+                    <span class="muted">Jump into the route comparer</span>
+                </a>
+                <a href="/profile" class="trip-card quick-link">
+                    <strong>Review impact</strong>
+                    <span class="muted">See savings and trip history</span>
+                </a>
+            </div>
+        </div>
+    </aside>
+
+    <div class="main-panel">
+        <header class="dashboard-topbar">
+            <div>
+                <div class="eyebrow">Commute Command Center</div>
+                <h1 class="page-title">Welcome back, {{ user.name }}</h1>
+                <p class="muted topbar-copy">Plan cleaner journeys, monitor air quality, and keep your weekly mobility streak moving.</p>
+            </div>
+            <div class="toolbar-actions">
+                <button type="button" class="mobile-nav-toggle" data-nav-toggle>Menu</button>
+                <button type="button" class="btn-secondary" data-open-modal="notifications-modal">Notifications</button>
+                <button type="button" class="btn-ghost" data-open-modal="settings-modal">Preferences</button>
+            </div>
+        </header>
+
+        <main class="dashboard-content">
+            <section class="workspace-banner workspace-banner-user reveal">
+                <div class="workspace-banner-copy">
+                    <div class="eyebrow">User Workspace</div>
+                    <h2>Your personal commute cockpit</h2>
+                    <p class="muted">Track AQI, compare cleaner routes, and keep your savings momentum visible without losing the calm minimal feel of the product.</p>
+                </div>
+                <div class="workspace-highlight-grid">
+                    {% for item in workspace_highlights %}
+                        <article class="workspace-highlight-card">
+                            <div class="row">
+                                <span class="meta-label">{{ item.label }}</span>
+                                {{ ui.status_badge(item.badge, item.tone) }}
+                            </div>
+                            <div class="metric-value small">{{ item.value }}</div>
+                            <div class="muted">{{ item.meta }}</div>
+                        </article>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="stats-grid">
+                {{ ui.metric_card("Air Quality", aqi_data.aqi, aqi_data.location, "dark", delta=aqi_data.quality, progress=(aqi_data.aqi / 200 * 100), tooltip="Live AQI snapshot for your detected area.") }}
+                {{ ui.metric_card("CO2 Saved", "%.2f"|format((user.co2_saved|float) / 1000), "kg avoided across your eco choices", progress=[((user.co2_saved|float) / 20000) * 100, 100]|min, delta="Up this week", tooltip="Computed against the baseline auto trip used by the backend.") }}
+                {{ ui.metric_card("Money Saved", "Rs." ~ (user.money_saved|round(0)|int), "across all saved trips", progress=[((user.money_saved|float) / 2000) * 100, 100]|min, delta="Budget wins", tooltip="Savings are compared against the same auto baseline trip.") }}
+                {{ ui.metric_card("Eco Trips", user.trips_taken, monthly_trip_count ~ " logged this month", progress=[((user.trips_taken|int) / 50) * 100, 100]|min, delta="Momentum", tooltip="Completed trip logs that contribute to your impact dashboard.") }}
+            </section>
+
+            <section class="split-grid layout-rail">
+                <article class="surface-card reveal dashboard-panel emphasis-panel">
+                    <div class="section-header">
+                        <div>
+                            <div class="eyebrow">Plan a Trip</div>
+                            <h2>Search your next destination</h2>
+                            <p class="muted">Get a denser route comparison surface with cleaner, cheaper, and faster tradeoffs.</p>
+                        </div>
+                        <span class="badge info">Live planning</span>
+                    </div>
+                    <form id="planner-search-form" class="stack">
+                        <div class="field">
+                            <label for="destination-input">Destination</label>
+                            <input type="text" id="destination-input" placeholder="Where do you want to go in Mumbai?" list="mumbai-locations" required>
+                        </div>
+                        <div class="inline-actions">
+                            <button type="submit" class="btn-primary">Search Routes</button>
+                            <a href="/profile" class="btn-secondary">View Savings</a>
+                        </div>
+                    </form>
+                    <datalist id="mumbai-locations">
+                        <option value="Bandra Station">
+                        <option value="Andheri West">
+                        <option value="CST (Chhatrapati Shivaji Terminus)">
+                        <option value="Churchgate">
+                        <option value="Dadar">
+                        <option value="Marine Drive">
+                        <option value="Kurla">
+                        <option value="Thane">
+                        <option value="Navi Mumbai">
+                    </datalist>
+                    <div class="quick-actions-grid">
+                        <a href="/route-planner?dest=Churchgate&lat={{ user_origin_lat if user_origin_lat is not none else 19.076 }}&lon={{ user_origin_lon if user_origin_lon is not none else 72.8777 }}" class="quick-action-card">
+                            <strong>Fast commute</strong>
+                            <span>Use preset city-center route</span>
+                        </a>
+                        <a href="/route-planner?dest=Thane&lat={{ user_origin_lat if user_origin_lat is not none else 19.076 }}&lon={{ user_origin_lon if user_origin_lon is not none else 72.8777 }}" class="quick-action-card">
+                            <strong>Longer hop</strong>
+                            <span>Compare rail-heavy options</span>
+                        </a>
+                        <button type="button" class="quick-action-card" data-open-modal="settings-modal">
+                            <strong>Refine preferences</strong>
+                            <span>Tune planning priorities</span>
+                        </button>
+                    </div>
+                </article>
+
+                <article class="surface-card reveal dashboard-panel">
+                    <div class="section-header">
+                        <div>
+                            <div class="eyebrow">AQI Readiness</div>
+                            <h2>{{ aqi_data.quality }}</h2>
+                        </div>
+                        <span class="badge {% if aqi_data.aqi <= 100 %}success{% elif aqi_data.aqi <= 150 %}warning{% else %}danger{% endif %}">
+                            AQI {{ aqi_data.aqi }}
+                        </span>
+                    </div>
+                    <div class="summary-grid">
+                        <div class="metric-card compact-card">
+                            <div class="meta-label">PM2.5</div>
+                            <div class="metric-value small">{{ aqi_data.pm25 }}</div>
+                        </div>
+                        <div class="metric-card compact-card">
+                            <div class="meta-label">PM10</div>
+                            <div class="metric-value small">{{ aqi_data.pm10 }}</div>
+                        </div>
+                        <div class="metric-card compact-card">
+                            <div class="meta-label">Avg Trip Cost</div>
+                            <div class="metric-value small">Rs.{{ avg_trip_cost }}</div>
+                        </div>
+                        <div class="metric-card compact-card">
+                            <div class="meta-label">Monthly Trips</div>
+                            <div class="metric-value small">{{ monthly_trip_count }}</div>
+                        </div>
+                    </div>
+                    <div class="surface-subtle stack">
+                        <div class="row"><span>Detected area</span><span class="mono">{{ aqi_data.location }}</span></div>
+                        <div class="row"><span>Recommended focus</span><span class="mono">{{ recommended_focus }}</span></div>
+                        <div class="row"><span>Route priority</span><span class="mono">AQI-aware balance</span></div>
+                    </div>
+                    <div class="progress-list">
+                        {% for signal in commute_signals[:2] %}
+                            {{ ui.progress_row(signal.label, signal.value, signal.progress, signal.tone, signal.meta) }}
+                        {% endfor %}
+                    </div>
+                </article>
+            </section>
+
+            <section class="split-grid">
+                <article class="surface-card reveal chart-card is-loading" data-chart-shell>
+                    <div class="section-header">
+                        <div>
+                            <div class="eyebrow">Trip Activity</div>
+                            <h2>Weekly mobility pulse</h2>
+                        </div>
+                        <span class="badge info">Last 7 days</span>
+                    </div>
+                    <div class="chart-shell">
+                        <canvas id="user-activity-chart" class="chart-canvas"></canvas>
+                    </div>
+                </article>
+
+                <article class="surface-card reveal {% if mode_mix %}chart-card is-loading{% endif %}" {% if mode_mix %}data-chart-shell{% endif %}>
+                    <div class="section-header">
+                        <div>
+                            <div class="eyebrow">Mode Mix</div>
+                            <h2>Transport balance</h2>
+                        </div>
+                        <span class="badge success">{{ mode_mix|length }} active modes</span>
+                    </div>
+                    {% if mode_mix %}
+                        <div class="chart-shell chart-shell-donut">
+                            <canvas id="user-mode-chart" class="chart-canvas"></canvas>
+                        </div>
+                    {% else %}
+                        <div class="trip-card empty-state-card">
+                            <strong>No mode data yet</strong>
+                            <p class="muted">Save a few trips to see your real transport mix instead of placeholder modes.</p>
+                        </div>
+                    {% endif %}
+                </article>
+            </section>
+
+            <section class="split-grid">
+                <article class="surface-card reveal">
+                    <div class="section-header">
+                        <div>
+                            <div class="eyebrow">Recent Trips</div>
+                            <h2>Latest saved journeys</h2>
+                        </div>
+                        <span class="badge info">{{ recent_trips|length }} recent</span>
+                    </div>
+                    <div class="timeline-list">
+                        {% if recent_trips %}
+                            {% for trip in recent_trips %}
+                                {{ ui.timeline_item(trip.destination, "Rs." ~ (trip.cost|round(0)|int) ~ " | " ~ trip.timestamp.strftime('%d %b'), "info", trip.mode) }}
+                            {% endfor %}
+                        {% else %}
+                            <div class="trip-card">
+                                <strong>No trips saved yet</strong>
+                                <p class="muted">Plan your first eco-friendly journey to unlock timeline insights and charts.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </article>
+
+                <article class="surface-card reveal">
+                    <div class="section-header">
+                        <div>
+                            <div class="eyebrow">Commute Signals</div>
+                            <h2>Where to focus next</h2>
+                        </div>
+                        <span class="badge success">Actionable</span>
+                    </div>
+                    <div class="progress-list">
+                        {% for signal in commute_signals %}
+                            {{ ui.progress_row(signal.label, signal.value, signal.progress, signal.tone, signal.meta) }}
+                        {% endfor %}
+                    </div>
+                </article>
+            </section>
+
+            <section class="split-grid">
+                <article class="surface-card reveal">
+                    <div class="section-header">
+                        <div>
+                            <div class="eyebrow">AI Suggestions</div>
+                            <h2>Suggestions for your next trip</h2>
+                        </div>
+                        <span class="badge info">Adaptive</span>
+                    </div>
+                    <div class="insight-list">
+                        {% for insight in insights %}
+                            <div class="insight-item {{ insight.tone }}">
+                                <div class="insight-dot"></div>
+                                <div>
+                                    <strong>{{ insight.title }}</strong>
+                                    <p class="muted">{{ insight.body }}</p>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </article>
+
+                <article class="surface-card reveal">
+                    <div class="section-header">
+                        <div>
+                            <div class="eyebrow">Energy Watch</div>
+                            <h2>City costs and planning settings</h2>
+                        </div>
+                        <span class="badge success">Planning ready</span>
+                    </div>
+                    <div class="summary-grid">
+                        <div class="metric-card compact-card"><div class="meta-label">Electric</div><div class="metric-value small">Rs.8.5</div><div class="metric-label">per kWh</div></div>
+                        <div class="metric-card compact-card"><div class="meta-label">Petrol</div><div class="metric-value small">Rs.106</div><div class="metric-label">per litre</div></div>
+                        <div class="metric-card compact-card"><div class="meta-label">Diesel</div><div class="metric-value small">Rs.92</div><div class="metric-label">per litre</div></div>
+                    </div>
+                    <div class="surface-subtle stack">
+                        <div class="row"><span>Clean-route preference</span><span class="mono">Active</span></div>
+                        <div class="row"><span>AQI alert sensitivity</span><span class="mono">Moderate+</span></div>
+                        <div class="row"><span>Suggested action</span><span class="mono">Rail first</span></div>
+                        <div class="row"><span>Monthly trip logs</span><span class="mono">{{ monthly_trip_count }}</span></div>
+                        <div class="row"><span>Current focus</span><span class="mono">{{ recommended_focus }}</span></div>
+                    </div>
+                </article>
+            </section>
+        </main>
+    </div>
+</div>
+
+<div class="modal" id="notifications-modal">
+    <div class="modal-panel">
+        <div class="card-header">
+            <h3>Notifications</h3>
+            <button type="button" class="btn-ghost" data-close-modal>Close</button>
+        </div>
+        <div class="stack">
+            <div class="trip-card">Great job. Your recent choices helped reduce personal transport emissions.</div>
+            <div class="trip-card">Route conditions may be heavier this evening across the Western corridor.</div>
+            <div class="trip-card">AQI conditions updated for your current area.</div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="settings-modal">
+    <div class="modal-panel">
+        <div class="card-header">
+            <h3>Planning Preferences</h3>
+            <button type="button" class="btn-ghost" data-close-modal>Close</button>
+        </div>
+        <div class="stack">
+            <div class="field">
+                <label for="preference-mode">Preferred route priority</label>
+                <select id="preference-mode">
+                    <option>Balanced</option>
+                    <option>Fastest</option>
+                    <option>Cheapest</option>
+                    <option>Cleanest</option>
+                </select>
+            </div>
+            <div class="field">
+                <label for="alert-level">AQI alert sensitivity</label>
+                <select id="alert-level">
+                    <option>Moderate and above</option>
+                    <option>Unhealthy and above</option>
+                    <option>Only severe alerts</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script id="home-dashboard-data" type="application/json">{{ {
+    "weekly_trip_activity": weekly_trip_activity,
+    "mode_mix": mode_mix,
+    "user_origin": {
+        "lat": user_origin_lat,
+        "lon": user_origin_lon
+    }
+}|tojson }}</script>
+{% endblock %}

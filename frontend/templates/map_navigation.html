@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Navigation - Raahi{% endblock %}
+{% block page_name %}map-navigation{% endblock %}
+
+{% block content %}
+<main class="location-shell">
+    <div class="shell stack">
+        <section class="dark-panel reveal">
+            <div class="page-header">
+                <div>
+                    <div class="eyebrow">Live Navigation</div>
+                    <h1 class="page-title">{{ route_data.destination }}</h1>
+                </div>
+                <span class="badge info">{{ route_data.vehicle }}</span>
+            </div>
+            <p class="lead">Track your journey with live progress, estimated arrival, and shareable destination context.</p>
+        </section>
+
+        <section class="split-grid">
+            <article class="map-panel reveal">
+                <div class="section-header">
+                    <div>
+                        <div class="eyebrow">Route Map</div>
+                        <h2>Destination view</h2>
+                    </div>
+                </div>
+                <iframe id="navigation-map" class="map-frame" title="Navigation map"></iframe>
+            </article>
+
+            <article class="surface-card reveal">
+                <div class="section-header">
+                    <div>
+                        <div class="eyebrow">Tracking Panel</div>
+                        <h2 id="tracking-status">Live tracking active</h2>
+                    </div>
+                </div>
+                <div class="stats-grid">
+                    <div class="metric-card"><div class="meta-label">Speed</div><div class="metric-value small" id="current-speed">0.0 km/h</div></div>
+                    <div class="metric-card"><div class="meta-label">Distance</div><div class="metric-value small" id="current-distance">0.0 km</div></div>
+                    <div class="metric-card"><div class="meta-label">ETA</div><div class="metric-value small" id="current-eta">--:--</div></div>
+                </div>
+                <div class="progress-list">
+                    <div>
+                        <div class="row"><span>Trip completion</span><span class="mono">{{ route_data.distance or '--' }} km target</span></div>
+                        <div class="progress-track"><div class="progress-fill" id="route-progress-fill" data-progress="0"></div></div>
+                    </div>
+                </div>
+                <div class="inline-actions">
+                    <button type="button" class="btn-secondary" id="pause-tracking">Pause Tracking</button>
+                    <button type="button" class="btn-primary" id="share-location">Share Location</button>
+                    <button type="button" class="btn-danger" id="end-navigation">End Trip</button>
+                </div>
+            </article>
+        </section>
+    </div>
+</main>
+
+<script id="navigation-data" type="application/json">{{ {
+    "destination": route_data.destination,
+    "vehicle": route_data.vehicle,
+    "dest_lat": route_data.dest_lat,
+    "dest_lon": route_data.dest_lon,
+    "distance": route_data.distance|default(0)
+}|tojson }}</script>
+{% endblock %}

@@ -1,0 +1,2 @@
+-- Placeholder init script for local PostgreSQL development.
+-- Add schema bootstrap SQL here if you need containerized initialization.

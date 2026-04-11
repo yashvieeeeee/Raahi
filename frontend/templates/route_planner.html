@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}Routes to {{ destination }} - Raahi{% endblock %}
+{% block page_name %}route-planner{% endblock %}
+{% block body_class %}dashboard-page workspace-user{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+    <aside class="sidebar">
+        <a href="/home" class="brand">
+            <img src="{{ url_for('static', filename='raahi_logo.png') }}" alt="Raahi" class="brand-mark">
+            <span class="brand-copy">
+                <strong>Raahi</strong>
+                <span>Route workspace</span>
+            </span>
+        </a>
+        <div class="workspace-switch surface-subtle">
+            <div class="sidebar-title">Workspace</div>
+            <div class="segmented workspace-tabs">
+                <a href="/home" class="workspace-link">User View</a>
+                <span class="active">Route Planner</span>
+            </div>
+        </div>
+        <div class="sidebar-group">
+            <div class="sidebar-title">Menu</div>
+            <nav class="sidebar-nav">
+                <a href="/home" class="sidebar-link">Back to Home</a>
+                <a href="/profile" class="sidebar-link">Profile</a>
+                <a href="/logout" class="sidebar-link">Sign Out</a>
+            </nav>
+        </div>
+        <div class="sidebar-group">
+            <div class="sidebar-title">Quick Actions</div>
+            <div class="stack">
+                <a href="/home" class="trip-card quick-link">
+                    <strong>Dashboard overview</strong>
+                    <span class="muted">Return to AQI and trip insights</span>
+                </a>
+                <a href="/profile" class="trip-card quick-link">
+                    <strong>Review savings</strong>
+                    <span class="muted">Check your impact before choosing a route</span>
+                </a>
+            </div>
+        </div>
+    </aside>
+
+    <div class="main-panel">
+        <header class="dashboard-topbar">
+            <div>
+                <div class="eyebrow">Route Analysis</div>
+                <h1 class="page-title">{{ destination }}</h1>
+            </div>
+            <div class="toolbar-actions">
+                <button type="button" class="mobile-nav-toggle" data-nav-toggle>Menu</button>
+                <span class="badge info">{{ distance|round(1) }} km</span>
+                <span class="badge {% if current_aqi <= 100 %}success{% elif current_aqi <= 150 %}warning{% else %}danger{% endif %}">AQI {{ current_aqi|default('--') }}</span>
+            </div>
+        </header>
+
+        <main class="dashboard-content">
+            <section class="split-grid">
+                <article class="surface-card reveal">
+                    <div class="section-header">
+                        <div>
+                            <div class="eyebrow">Search Again</div>
+                            <h2>Plan a different destination</h2>
+                        </div>
+                    </div>
+                    <form id="destination-search-form" class="stack">
+                        <div class="field">
+                            <label for="new-destination-input">New destination</label>
+                            <input type="text" id="new-destination-input" placeholder="Try another Mumbai destination" list="mumbai-locations" required>
+                        </div>
+                        <button type="submit" class="btn-primary">Refresh Routes</button>
+                    </form>
+                    <datalist id="mumbai-locations">
+                        <option value="Bandra Station">
+                        <option value="Andheri West">
+                        <option value="Churchgate">
+                        <option value="Dadar">
+                        <option value="Kurla">
+                        <option value="Thane">
+                    </datalist>
+                </article>
+
+                <article class="map-panel reveal">
+                    <div class="section-header">
+                        <div>
+                            <div class="eyebrow">Map Preview</div>
+                            <h2>Destination context</h2>
+                        </div>
+                    </div>
+                    <iframe id="route-map" class="map-frame" title="Route map preview"></iframe>
+                </article>
+            </section>
+
+            <section class="surface-card reveal">
+                <div class="section-header">
+                    <div>
+                        <div class="eyebrow">Preference Filter</div>
+                        <h2>Sort options by what matters most</h2>
+                    </div>
+                    <div class="segmented">
+                        <button type="button" class="active" data-pref="time">Fastest</button>
+                        <button type="button" data-pref="cost">Cheapest</button>
+                        <button type="button" data-pref="co2">Cleanest</button>
+                    </div>
+                </div>
+                <div class="route-grid" id="route-grid">
+                    {% for route in routes %}
+                        {% set score = ((max_time - route.time) + (max_cost - route.cost) + (max_co2 - route.co2)) %}
+                        <article class="route-card {% if loop.first %}recommended{% endif %} reveal"
+                                 data-vehicle="{{ route.vehicle }}"
+                                 data-time="{{ route.time }}"
+                                 data-cost="{{ route.cost }}"
+                                 data-co2="{{ route.co2 }}"
+                                 data-score="{{ score }}">
+                            <div class="row">
+                                <div>
+                                    <div class="eyebrow">Option {{ loop.index }}</div>
+                                    <h3>{{ route.vehicle }}</h3>
+                                </div>
+                                <span class="badge {% if route.co2 < 50 %}success{% elif route.co2 < 150 %}warning{% else %}danger{% endif %}">
+                                    {{ route.recommendation }}
+                                </span>
+                            </div>
+                            <p class="muted">{{ route.details }}</p>
+                            <div class="summary-grid">
+                                <div class="metric-card">
+                                    <div class="meta-label">Travel Time</div>
+                                    <div class="metric-value small">{{ route.time|round|int }}</div>
+                                    <div class="metric-label">minutes</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="meta-label">Cost</div>
+                                    <div class="metric-value small">Rs.{{ route.cost|round(0)|int }}</div>
+                                    <div class="metric-label">estimated fare</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="meta-label">CO2</div>
+                                    <div class="metric-value small">{{ "%.2f"|format((route.co2|float) / 1000) }}kg</div>
+                                    <div class="metric-label">estimated emissions</div>
+                                </div>
+                            </div>
+                            <div class="comparison-bars">
+                                <div>
+                                    <div class="row"><span class="muted">Time</span><span class="mono">{{ route.time|round|int }} min</span></div>
+                                    <div class="bar-track"><div class="bar-fill" data-progress="{{ (route.time / max_time * 100) if max_time else 0 }}"></div></div>
+                                </div>
+                                <div>
+                                    <div class="row"><span class="muted">Cost</span><span class="mono">Rs.{{ route.cost|round(0)|int }}</span></div>
+                                    <div class="bar-track"><div class="bar-fill warning" data-progress="{{ (route.cost / max_cost * 100) if max_cost else 0 }}"></div></div>
+                                </div>
+                                <div>
+                                    <div class="row"><span class="muted">Emissions</span><span class="mono">{{ "%.2f"|format((route.co2|float) / 1000) }} kg</span></div>
+                                    <div class="bar-track"><div class="bar-fill info" data-progress="{{ (route.co2 / max_co2 * 100) if max_co2 else 0 }}"></div></div>
+                                </div>
+                            </div>
+                            <div class="inline-actions">
+                                <button type="button" class="btn-primary" data-select-route>Select Route</button>
+                                <button type="button" class="btn-secondary" data-compare-route>Compare</button>
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+            </section>
+        </main>
+    </div>
+</div>
+
+<div class="modal" id="comparison-modal">
+    <div class="modal-panel">
+        <div class="card-header">
+            <h3>Route Comparison</h3>
+            <button type="button" class="btn-ghost" data-close-modal>Close</button>
+        </div>
+        <div id="comparison-summary"></div>
+    </div>
+</div>
+
+<script id="route-planner-data" type="application/json">{{ {
+    "destination": destination,
+    "distance": distance,
+    "dest_lat": dest_lat,
+    "dest_lon": dest_lon,
+    "user_lat": user_lat,
+    "user_lon": user_lon
+}|tojson }}</script>
+{% endblock %}

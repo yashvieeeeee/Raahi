@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Location Access - Raahi{% endblock %}
+{% block page_name %}location{% endblock %}
+
+{% block content %}
+<main class="location-shell">
+    <div class="shell split-grid">
+        <section class="reveal">
+            <div class="eyebrow">Location Access</div>
+            <h1 class="page-title">Enable live location for more accurate route guidance.</h1>
+            <p class="lead">
+                Raahi uses your location to improve AQI context, route planning, and navigation accuracy across Mumbai.
+            </p>
+            <div class="stack">
+                <div class="feature-card">
+                    <h3>Why enable it?</h3>
+                    <p class="muted">See nearby pollution signals, route distance estimates, and smarter travel recommendations.</p>
+                </div>
+                <div class="feature-grid">
+                    <div class="feature-card"><strong>GPS-based planning</strong><p class="muted">Start with your real origin.</p></div>
+                    <div class="feature-card"><strong>Better AQI accuracy</strong><p class="muted">Use location-specific pollution context.</p></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="surface-card reveal">
+            <div class="card-header">
+                <div>
+                    <div class="eyebrow">Permission Step</div>
+                    <h2 class="page-title">Grant access to continue</h2>
+                </div>
+                <span class="badge warning">Required</span>
+            </div>
+            <p class="muted">You can still manage your privacy later, but enabling location now gives Raahi the best travel context.</p>
+            <div class="stack">
+                <button type="button" class="btn-primary" id="request-location-access">Enable Location Access</button>
+                <p class="helper-text" id="location-permission-status">We will request high-accuracy browser coordinates and save them to your account.</p>
+                <a href="/home" class="btn-secondary">Continue without GPS</a>
+            </div>
+        </section>
+    </div>
+</main>
+{% endblock %}

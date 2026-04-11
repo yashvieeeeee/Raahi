@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Login / Register - Raahi{% endblock %}
+{% block page_name %}auth{% endblock %}
+{% block body_class %}auth-page{% endblock %}
+
+{% block content %}
+<main class="auth-shell">
+    <div class="shell auth-grid">
+        <section class="reveal">
+            <a href="/" class="brand">
+                <img src="{{ url_for('static', filename='raahi_logo.png') }}" alt="Raahi" class="brand-mark">
+                <span class="brand-copy">
+                    <strong>Raahi</strong>
+                    <span>Transit intelligence for Mumbai</span>
+                </span>
+            </a>
+            <div class="stack" style="margin-top: 24px;">
+                <div class="eyebrow">Access Platform</div>
+                <h1 class="page-title">A confident, cleaner commute starts here.</h1>
+                <p class="lead">
+                    Sign in to plan routes, monitor AQI, save trips, and track your environmental impact in one system.
+                </p>
+                <div class="surface-subtle auth-info-panel">
+                    <div class="row">
+                        <span>Route planning</span>
+                        <span class="badge success">Ready</span>
+                    </div>
+                    <div class="row">
+                        <span>GPS-aware setup</span>
+                        <span class="badge info">After signup</span>
+                    </div>
+                    <div class="row">
+                        <span>Admin exports</span>
+                        <span class="badge warning">Role-based</span>
+                    </div>
+                </div>
+                <div class="card-grid">
+                    <article class="feature-card">
+                        <div class="meta-label">Signal 1</div>
+                        <h3>Real-time route context</h3>
+                        <p class="muted">Distance, fare, emissions, and quality indicators in one planning surface.</p>
+                    </article>
+                    <article class="feature-card">
+                        <div class="meta-label">Signal 2</div>
+                        <h3>Personal analytics</h3>
+                        <p class="muted">Track your eco trips and savings with a polished dashboard experience.</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="auth-panel reveal" data-initial-user-view="{{ initial_user_view|default('login') }}">
+            <div class="auth-panel-header">
+                <div>
+                    <div class="eyebrow">Account Access</div>
+                    <h2 class="page-title">Sign in or create your account</h2>
+                </div>
+            </div>
+
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div class="auth-alerts">
+                        {% for message in messages %}
+                            <div class="surface-card danger auth-alert">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <div class="auth-unified-container">
+                <div class="auth-toggle-wrapper">
+                    <div class="segmented" role="tablist" aria-label="Authentication flow">
+                        <button type="button" class="active" data-auth-tab="login" aria-selected="true">Sign In</button>
+                        <button type="button" data-auth-tab="register" aria-selected="false">Create Account</button>
+                    </div>
+                </div>
+
+                <div class="auth-forms-container">
+                    <form id="login-view" class="auth-form-unified stack" method="POST" action="/auth/login">
+                        <div class="field">
+                            <label for="email_or_phone">Email or phone number</label>
+                            <input type="text" id="email_or_phone" name="email_or_phone" placeholder="user@example.com or 9876543210" required>
+                        </div>
+                        <div class="field">
+                            <label for="password">Password</label>
+                            <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                        </div>
+                        <div class="auth-form-footer">
+                            <span class="helper-text">Use your email or 10-digit phone number.</span>
+                            <button type="submit" class="btn-primary">Sign In</button>
+                        </div>
+                    </form>
+
+                    <form id="register-view" class="auth-form-unified stack" method="POST" action="/auth/register" hidden>
+                        <div class="field">
+                            <label for="reg_name">Full name</label>
+                            <input type="text" id="reg_name" name="name" placeholder="Your full name" required>
+                        </div>
+                        <div class="field">
+                            <label for="reg_email_or_phone">Email or phone number</label>
+                            <input type="text" id="reg_email_or_phone" name="email_or_phone" placeholder="user@example.com or 9876543210" required>
+                            <div class="helper-text">Use a valid email or a 10-digit phone number.</div>
+                        </div>
+                        <div class="field">
+                            <label for="reg_password">Create password</label>
+                            <input type="password" id="reg_password" name="password" placeholder="Create a secure password" required>
+                        </div>
+                        <div class="auth-form-footer">
+                            <span class="helper-text">After registration you will continue to location setup.</span>
+                            <button type="submit" class="btn-primary">Create Account</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+{% endblock %}

@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.coverage
+.env.local
+.DS_Store
+
+instance/*.db
+!instance/.gitkeep
+
+frontend/static/*.map
+backend/pdf_export_service/node_modules/

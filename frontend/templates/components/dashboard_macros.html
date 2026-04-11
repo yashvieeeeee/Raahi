@@ -1,0 +1,95 @@
+{% macro metric_card(label, value, subtitle="", tone="default", progress=None, delta=None, tooltip=None, suffix="") -%}
+<article class="metric-card metric-card--rich {% if tone == 'dark' %}dark{% endif %} reveal" {% if tooltip %}data-tooltip="{{ tooltip }}"{% endif %}>
+    <div class="metric-head">
+        <div>
+            <div class="meta-label">{{ label }}</div>
+        </div>
+        <div class="metric-meta-stack">
+            {% if progress is not none %}
+                <div class="metric-mini-ring" style="--metric-progress: {{ progress }}%">
+                    <span>{{ progress|round(0, 'floor')|int }}%</span>
+                </div>
+            {% endif %}
+            {% if delta %}
+                <span class="trend-pill">{{ delta }}</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="metric-value">{{ value }}{{ suffix }}</div>
+    {% if subtitle %}
+        <div class="metric-label">{{ subtitle }}</div>
+    {% endif %}
+    {% if progress is not none %}
+        <div class="metric-inline-progress">
+            <div class="progress-track"><div class="progress-fill" data-progress="{{ progress }}"></div></div>
+        </div>
+    {% endif %}
+</article>
+{%- endmacro %}
+
+{% macro status_badge(label, tone="success") -%}
+<span class="status-badge {{ tone }}">{{ label }}</span>
+{%- endmacro %}
+
+{% macro progress_row(label, value, progress, tone="primary", meta=None) -%}
+<div class="progress-row" data-tooltip="{{ meta or label }}">
+    <div class="row">
+        <span>{{ label }}</span>
+        <span class="mono">{{ value }}</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill {% if tone != 'primary' %}{{ tone }}{% endif %}" data-progress="{{ progress }}"></div></div>
+</div>
+{%- endmacro %}
+
+{% macro circular_metric(label, display_value, ring_id, value_id, label_id, progress=0, tooltip=None) -%}
+<div class="circular-metric reveal" {% if tooltip %}data-tooltip="{{ tooltip }}"{% endif %}>
+    <div class="circular-ring" id="{{ ring_id }}" style="--metric-progress: {{ progress }}%">
+        <span class="circular-value" id="{{ value_id }}">{{ display_value }}</span>
+    </div>
+    <div class="meta-label" id="{{ label_id }}">{{ label }}</div>
+</div>
+{%- endmacro %}
+
+{% macro timeline_item(title, meta="", tone="default", badge=None) -%}
+<div class="timeline-item">
+    <div class="timeline-dot {{ tone }}"></div>
+    <div class="timeline-content">
+        <div class="row">
+            <strong>{{ title }}</strong>
+            {% if badge %}
+                <span class="badge info">{{ badge }}</span>
+            {% endif %}
+        </div>
+        {% if meta %}
+            <div class="muted">{{ meta }}</div>
+        {% endif %}
+    </div>
+</div>
+{%- endmacro %}
+
+{% macro table_action(label, tone="ghost", action="view") -%}
+<button type="button" class="table-action table-action-{{ tone }}" data-table-action="{{ action }}" aria-label="{{ label }}">
+    <span class="table-action-icon" aria-hidden="true">
+        {% if action == "edit" %}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 20h9"/>
+                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"/>
+            </svg>
+        {% elif action == "delete" %}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 6h18"/>
+                <path d="M8 6V4h8v2"/>
+                <path d="M19 6l-1 14H6L5 6"/>
+                <path d="M10 11v6"/>
+                <path d="M14 11v6"/>
+            </svg>
+        {% else %}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z"/>
+                <circle cx="12" cy="12" r="3"/>
+            </svg>
+        {% endif %}
+    </span>
+    <span class="sr-only">{{ label }}</span>
+</button>
+{%- endmacro %}

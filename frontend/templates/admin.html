@@ -1,0 +1,385 @@
+{% extends "base.html" %}
+{% import "components/dashboard_macros.html" as ui %}
+
+{% block title %}Admin Dashboard - Raahi{% endblock %}
+{% block page_name %}admin{% endblock %}
+{% block body_class %}dashboard-page workspace-admin{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+    <aside class="sidebar">
+        <a href="/admin-dashboard" class="brand">
+            <img src="{{ url_for('static', filename='raahi_logo.png') }}" alt="Raahi" class="brand-mark">
+            <span class="brand-copy">
+                <strong>Raahi</strong>
+                <span>Admin control room</span>
+            </span>
+        </a>
+
+        <div class="workspace-switch surface-subtle">
+            <div class="sidebar-title">Workspace</div>
+            <div class="segmented workspace-tabs">
+                <a href="/home" class="workspace-link">User View</a>
+                <button type="button" class="active">Admin Control</button>
+            </div>
+        </div>
+
+        <div class="sidebar-group">
+            <div class="sidebar-title">Admin</div>
+            <nav class="sidebar-nav">
+                <a href="/admin-dashboard" class="sidebar-link active">Overview</a>
+                <a href="/home" class="sidebar-link">User View</a>
+                <a href="/logout" class="sidebar-link">Sign Out</a>
+            </nav>
+        </div>
+
+        <div class="sidebar-group">
+            <div class="sidebar-title">Quick Actions</div>
+            <div class="stack">
+                <button type="button" class="trip-card quick-link" id="retrain-sidebar">
+                    <strong>Retrain active model</strong>
+                    <span class="muted">Trigger the selected pipeline</span>
+                </button>
+                <button type="button" class="trip-card quick-link" id="refresh-sidebar">
+                    <strong>Refresh live metrics</strong>
+                    <span class="muted">Sync the latest model health</span>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <div class="main-panel">
+        <header class="dashboard-topbar">
+            <div>
+                <div class="eyebrow">Operations Dashboard</div>
+                <h1 class="page-title">Platform health and ML oversight</h1>
+                <p class="muted topbar-copy">A denser control room for adoption, transport behavior, and model reliability.</p>
+            </div>
+            <div class="toolbar-actions">
+                <button type="button" class="mobile-nav-toggle" data-nav-toggle>Menu</button>
+                <button type="button" class="btn-secondary" id="export-analytics">Export Analytics</button>
+                <button type="button" class="btn-ghost" id="export-users">Export Users</button>
+            </div>
+        </header>
+
+        <main class="dashboard-content">
+            <section class="workspace-banner workspace-banner-admin reveal">
+                <div class="workspace-banner-copy">
+                    <div class="eyebrow">Admin Workspace</div>
+                    <h2>Control room for platform health</h2>
+                    <p class="muted">A denser operational surface for growth, route behavior, model quality, and user management without departing from the existing Raahi design system.</p>
+                </div>
+                <div class="workspace-highlight-grid">
+                    {% for item in admin_workspace_highlights %}
+                        <article class="workspace-highlight-card">
+                            <div class="row">
+                                <span class="meta-label">{{ item.label }}</span>
+                                {{ ui.status_badge(item.badge, item.tone) }}
+                            </div>
+                            <div class="metric-value small">{{ item.value }}</div>
+                            <div class="muted">{{ item.meta }}</div>
+                        </article>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="section-stack">
+                <div class="section-header section-header--tight">
+                    <div>
+                        <div class="eyebrow">System Overview</div>
+                        <h2>Live operational signals</h2>
+                    </div>
+                    <span class="badge success">Live control surface</span>
+                </div>
+                <div class="stats-grid">
+                    {{ ui.metric_card("Total Users", total_users, users_today ~ " joined today", "dark", users_progress, "+today", "Current registered accounts and daily growth.") }}
+                    {{ ui.metric_card("Active Routes", active_routes, total_trips ~ " trips logged overall", "default", routes_progress, "Live", "Trips saved in the last hour versus overall trip history.") }}
+                    {{ ui.metric_card("CO2 Saved", "%.2f"|format((total_co2|float) / 1000), "%.2f"|format((co2_today|float) / 1000) ~ " kg recorded today", "default", co2_progress, "Eco impact", "Total baseline-adjusted CO2 savings across the platform.", " kg") }}
+                    {{ ui.metric_card("Average AQI", avg_aqi, aqi_trend, "default", aqi_progress, "Stable", "Estimated network-wide AQI blend from the processed travel dataset.") }}
+                </div>
+            </section>
+
+            <section class="split-grid analytics-grid">
+                <article class="surface-card reveal chart-card is-loading" data-chart-shell>
+                    <div class="section-header">
+                        <div>
+                            <div class="eyebrow">Analytics Dashboard</div>
+                            <h2>User growth trend</h2>
+                        </div>
+                        <span class="badge info">7-day line</span>
+                    </div>
+                    <div class="chart-shell">
+                        <canvas id="admin-user-growth-chart" class="chart-canvas"></canvas>
+                    </div>
+                </article>
+
+                <article class="surface-card reveal">
+                    <div class="section-header">
+                        <div>
+                            <div class="eyebrow">Route Usage</div>
+                            <h2>Mode activity by demand</h2>
+                        </div>
+                        <span class="badge success">Operational mix</span>
+                    </div>
+                    <div class="progress-list">
+                        {% for item in route_usage %}
+                            {{ ui.progress_row(item.label, item.value ~ " trips", item.progress, item.tone, "Share of current saved trip mix.") }}
+                        {% endfor %}
+                    </div>
+                </article>
+            </section>
+
+            <section class="split-grid analytics-grid">
+                <article class="surface-card reveal">
+                    <div class="section-header">
+                        <div>
+                            <div class="eyebrow">AQI by Zone</div>
+                            <h2>Urban corridor watch</h2>
+                        </div>
+                        <span class="badge warning">Multi-zone blend</span>
+                    </div>
+                    <div class="progress-list">
+                        {% for zone in aqi_by_zone %}
+                            {{ ui.progress_row(zone.label, zone.value ~ " AQI", zone.progress, zone.tone, "Estimated zone pressure score.") }}
+                        {% endfor %}
+                    </div>
+                </article>
+
+                <article class="surface-card reveal chart-card is-loading" data-chart-shell>
+                    <div class="section-header">
+                        <div>
+                            <div class="eyebrow">Transport Mode</div>
+                            <h2>Platform mode mix</h2>
+                        </div>
+                        <span class="badge info">Donut view</span>
+                    </div>
+                    <div class="chart-shell chart-shell-donut">
+                        <canvas id="admin-transport-mode-chart" class="chart-canvas"></canvas>
+                    </div>
+                </article>
+            </section>
+
+            <section class="surface-card reveal">
+                <div class="section-header">
+                    <div>
+                        <div class="eyebrow">ML Model Performance</div>
+                        <h2>Model health and distribution</h2>
+                    </div>
+                    <div class="inline-actions">
+                        <button type="button" class="btn-primary" id="retrain-model">Retrain</button>
+                        <button type="button" class="btn-secondary" id="refresh-metrics">Refresh Metrics</button>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="model-selector">Selected model</label>
+                    <select id="model-selector" data-default-model="{{ selected_model_name }}">
+                        {% for model_name in model_options %}
+                            <option value="{{ model_name }}" {% if model_name == selected_model_name %}selected{% endif %}>{{ model_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="summary-grid management-summary-grid">
+                    <article class="metric-card compact-card">
+                        <div class="meta-label">Selected model</div>
+                        <div class="workspace-stat-value" id="model-selected-name">{{ selected_model_name }}</div>
+                        <div class="metric-label">Active dashboard focus</div>
+                    </article>
+                    <article class="metric-card compact-card">
+                        <div class="meta-label">Task type</div>
+                        <div class="workspace-stat-value" id="model-task-type">Classification</div>
+                        <div class="metric-label">Metric set adjusts automatically</div>
+                    </article>
+                    <article class="metric-card compact-card">
+                        <div class="meta-label">High-delay rate</div>
+                        <div class="workspace-stat-value" id="model-high-delay-rate">{{ model_distribution.high_delay_rate }}%</div>
+                        <div class="metric-label">Recent prediction mix</div>
+                    </article>
+                    <article class="metric-card compact-card">
+                        <div class="meta-label">Average delay</div>
+                        <div class="workspace-stat-value" id="model-avg-delay">{{ model_distribution.avg_delay }} min</div>
+                        <div class="metric-label">Model distribution average</div>
+                    </article>
+                </div>
+
+                <div class="radial-grid" id="model-radial-grid">
+                    {{ ui.circular_metric("Accuracy", "%.1f"|format(model_accuracy|float) ~ "%", "model-metric-ring-1", "model-metric-1-value", "model-metric-1-label", model_accuracy, "Overall correct classifications across validation data.") }}
+                    {{ ui.circular_metric("Precision", "%.1f"|format(model_precision|float) ~ "%", "model-metric-ring-2", "model-metric-2-value", "model-metric-2-label", model_precision, "How often positive predictions were correct.") }}
+                    {{ ui.circular_metric("Recall", "%.1f"|format(model_recall|float) ~ "%", "model-metric-ring-3", "model-metric-3-value", "model-metric-3-label", model_recall, "How much of the target class the model recovered.") }}
+                    {{ ui.circular_metric("F1 Score", "%.1f"|format(model_f1|float) ~ "%", "model-metric-ring-4", "model-metric-4-value", "model-metric-4-label", model_f1, "Balanced harmonic mean of precision and recall.") }}
+                </div>
+
+                <div class="split-grid analytics-grid">
+                    <article class="surface-subtle chart-card is-loading" data-chart-shell>
+                        <div class="section-header section-header--tight">
+                            <div>
+                                <div class="eyebrow">Prediction Distribution</div>
+                                <h3>Operational output mix</h3>
+                            </div>
+                            <span class="badge info">{{ model_distribution.high_delay_rate }}% high-delay rate</span>
+                        </div>
+                        <div class="chart-shell">
+                            <canvas id="admin-prediction-chart" class="chart-canvas"></canvas>
+                        </div>
+                    </article>
+
+                    <article class="surface-subtle chart-card is-loading" data-chart-shell>
+                        <div class="section-header section-header--tight">
+                            <div>
+                                <div class="eyebrow">Feature Importance</div>
+                                <h3>Current advisory drivers</h3>
+                            </div>
+                            <span class="badge success">Avg delay {{ model_distribution.avg_delay }} min</span>
+                        </div>
+                        <div class="chart-shell">
+                            <canvas id="admin-feature-chart" class="chart-canvas"></canvas>
+                        </div>
+                    </article>
+                </div>
+
+                <div class="trip-card info-list">
+                    <div class="row"><span>Version</span><strong id="model-version-value">{{ model_version }}</strong></div>
+                    <div class="row"><span>Training samples</span><strong id="model-training-samples-value">{{ training_samples }}</strong></div>
+                    <div class="row"><span>Last trained</span><strong id="model-last-trained-value">{{ last_trained }}</strong></div>
+                </div>
+            </section>
+
+            <section class="split-grid">
+                <article class="surface-card reveal">
+                    <div class="section-header">
+                        <div>
+                            <div class="eyebrow">Operational Snapshot</div>
+                            <h2>Priority indicators</h2>
+                        </div>
+                        <span class="badge info">Live watch</span>
+                    </div>
+                    <div class="progress-list">
+                        {% for signal in operations_focus %}
+                            {{ ui.progress_row(signal.label, signal.value, signal.progress, signal.tone, signal.meta) }}
+                        {% endfor %}
+                    </div>
+                </article>
+
+                <article class="surface-card reveal">
+                    <div class="section-header">
+                        <div>
+                            <div class="eyebrow">Activity Timeline</div>
+                            <h2>Recent operational events</h2>
+                        </div>
+                        <span class="badge success">Streaming</span>
+                    </div>
+                    <div class="timeline-list">
+                        {% for item in recent_activity %}
+                            {{ ui.timeline_item(item.label, item.meta, item.tone) }}
+                        {% endfor %}
+                    </div>
+                </article>
+            </section>
+
+            <section class="surface-card reveal">
+                <div class="section-header">
+                    <div>
+                        <div class="eyebrow">Operational Insights</div>
+                        <h2>What deserves attention right now</h2>
+                    </div>
+                    <span class="badge warning">AI-assisted</span>
+                </div>
+                <div class="insight-grid">
+                    {% for insight in system_insights %}
+                        <div class="insight-item {{ insight.tone }}">
+                            <div class="insight-dot"></div>
+                            <div>
+                                <strong>{{ insight.title }}</strong>
+                                <p class="muted">{{ insight.body }}</p>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="table-panel reveal">
+                <div class="section-header">
+                    <div>
+                        <div class="eyebrow">User Management</div>
+                        <h2>Latest platform accounts</h2>
+                    </div>
+                    <span class="badge info" id="user-results-count">Showing {{ managed_users|length }}</span>
+                </div>
+                <div class="summary-grid management-summary-grid">
+                    {% for item in user_management_summary %}
+                        <article class="metric-card compact-card">
+                            <div class="meta-label">{{ item.label }}</div>
+                            <div class="workspace-stat-value">{{ item.value }}</div>
+                            <div class="metric-label">{{ item.meta }}</div>
+                        </article>
+                    {% endfor %}
+                </div>
+                <div class="section-header section-header--tight">
+                    <div>
+                        <div class="eyebrow">Filters</div>
+                        <h3>Search and segment accounts</h3>
+                    </div>
+                    <div class="table-toolbar">
+                        <div class="field field-inline">
+                            <label for="user-search">Search users</label>
+                            <input type="text" id="user-search" placeholder="Search by name or contact">
+                        </div>
+                        <div class="field field-inline">
+                            <label for="user-status-filter">Status</label>
+                            <select id="user-status-filter">
+                                <option value="all">All</option>
+                                <option value="enabled">Location enabled</option>
+                                <option value="limited">Limited setup</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <table class="data-table" id="admin-users-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Contact</th>
+                            <th>Role</th>
+                            <th>Joined</th>
+                            <th>Trips</th>
+                            <th>CO2 Saved</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in managed_users %}
+                            <tr data-user-name="{{ (user.name or '')|lower }}" data-user-contact="{{ ((user.email or user.phone or ''))|lower }}" data-user-status="{% if user.location_enabled %}enabled{% else %}limited{% endif %}">
+                                <td>{{ user.name }}</td>
+                                <td>{{ user.email or user.phone or 'Not provided' }}</td>
+                                <td>{{ ui.status_badge("Admin", "info") if user.is_admin else ui.status_badge("Member", "success") }}</td>
+                                <td>{{ user.joined_date.strftime('%Y-%m-%d') if user.joined_date else 'N/A' }}</td>
+                                <td>{{ user.trips_taken or 0 }}</td>
+                                <td>{{ "%.2f"|format((user.co2_saved or 0) / 1000) }} kg</td>
+                                <td>
+                                    {{ ui.status_badge("Location enabled", "success") if user.location_enabled else ui.status_badge("Limited setup", "warning") }}
+                                </td>
+                                <td>
+                                    <div class="table-actions">
+                                        {{ ui.table_action("View", "ghost", "view") }}
+                                        {{ ui.table_action("Edit", "ghost", "edit") }}
+                                        {{ ui.table_action("Delete", "danger", "delete") }}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+</div>
+
+<script id="admin-dashboard-data" type="application/json">{{ {
+    "user_growth": user_growth,
+    "transport_mode_mix": transport_mode_mix,
+    "prediction_distribution": prediction_distribution,
+    "feature_importance": feature_importance
+}|tojson }}</script>
+{% endblock %}

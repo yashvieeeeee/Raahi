@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - Raahi{% endblock %}
+{% block page_name %}profile{% endblock %}
+{% block body_class %}dashboard-page workspace-user{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+    <aside class="sidebar">
+        <a href="/home" class="brand">
+            <img src="{{ url_for('static', filename='raahi_logo.png') }}" alt="Raahi" class="brand-mark">
+            <span class="brand-copy">
+                <strong>Raahi</strong>
+                <span>User dashboard</span>
+            </span>
+        </a>
+        <div class="workspace-switch surface-subtle">
+            <div class="sidebar-title">Workspace</div>
+            <div class="segmented workspace-tabs">
+                <a href="/home" class="workspace-link">User View</a>
+                <span class="active">Profile View</span>
+            </div>
+        </div>
+        <div class="sidebar-group">
+            <div class="sidebar-title">Menu</div>
+            <nav class="sidebar-nav">
+                <a href="/home" class="sidebar-link">Overview</a>
+                <a href="/profile" class="sidebar-link active">Profile</a>
+                <a href="/logout" class="sidebar-link">Sign Out</a>
+            </nav>
+        </div>
+        <div class="sidebar-group">
+            <div class="sidebar-title">Quick Actions</div>
+            <div class="stack">
+                <a href="/home" class="trip-card quick-link">
+                    <strong>Back to overview</strong>
+                    <span class="muted">Return to your commute dashboard</span>
+                </a>
+                <a href="/route-planner?dest=Churchgate" class="trip-card quick-link">
+                    <strong>Plan another trip</strong>
+                    <span class="muted">Compare your next route quickly</span>
+                </a>
+            </div>
+        </div>
+    </aside>
+
+    <div class="main-panel">
+        <header class="dashboard-topbar">
+            <div>
+                <div class="eyebrow">Personal Impact</div>
+                <h1 class="page-title">{{ user.name }}</h1>
+            </div>
+            <div class="toolbar-actions">
+                <button type="button" class="mobile-nav-toggle" data-nav-toggle>Menu</button>
+                <button type="button" class="btn-secondary" id="share-profile">Share Profile</button>
+            </div>
+        </header>
+
+        <main class="dashboard-content">
+            <section class="split-grid">
+                <article class="surface-card reveal">
+                    <div class="card-header">
+                        <div>
+                            <div class="eyebrow">Account Summary</div>
+                            <h2>{{ user.name }}</h2>
+                        </div>
+                        <span class="badge success">{{ user.trips_taken }} eco trips</span>
+                    </div>
+                    <div class="stack">
+                        <div class="trip-card">
+                            <strong>Contact</strong>
+                            <div class="muted">{{ user.phone or user.email or "No contact saved" }}</div>
+                        </div>
+                        <div class="trip-card">
+                            <strong>Joined</strong>
+                            <div class="muted">{{ user.joined_date.strftime('%d %b %Y') }}</div>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="surface-card reveal">
+                    <div class="section-header">
+                        <div>
+                            <div class="eyebrow">Performance</div>
+                            <h2>Impact at a glance</h2>
+                        </div>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="metric-card dark">
+                            <div class="meta-label">CO2 Saved</div>
+                            <div class="metric-value" data-count-to="{{ (total_co2_saved|float) / 1000 }}" data-decimals="2">{{ "%.2f"|format((total_co2_saved|float) / 1000) }}</div>
+                            <div class="metric-label">kilograms</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="meta-label">Money Saved</div>
+                            <div class="metric-value" data-count-to="{{ total_money_saved|float }}" data-prefix="Rs." data-decimals="0">Rs.{{ total_money_saved|round(0)|int }}</div>
+                            <div class="metric-label">rupees</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="meta-label">Trips Logged</div>
+                            <div class="metric-value" data-count-to="{{ all_trips|length }}" data-decimals="0">{{ all_trips|length }}</div>
+                            <div class="metric-label">saved journeys</div>
+                        </div>
+                    </div>
+                </article>
+            </section>
+
+            <section class="surface-card reveal">
+                <div class="section-header">
+                    <div>
+                        <div class="eyebrow">Trend View</div>
+                        <h2>Weekly and monthly impact</h2>
+                    </div>
+                    <div class="segmented">
+                        <button type="button" class="active" data-chart-view="weekly">Weekly</button>
+                        <button type="button" data-chart-view="monthly">Monthly</button>
+                    </div>
+                </div>
+                <div class="chart-bars" id="impact-chart-bars"></div>
+            </section>
+
+            <section class="split-grid">
+                <article class="surface-card reveal">
+                    <div class="section-header">
+                        <div>
+                            <div class="eyebrow">Goals</div>
+                            <h2>Progress trackers</h2>
+                        </div>
+                    </div>
+                    <div class="progress-list">
+                        <div>
+                            <div class="row"><span>CO2 reduction target</span><span class="mono">{{ ((total_co2_saved / 1000) * 100)|round(1) }}%</span></div>
+                            <div class="progress-track"><div class="progress-fill" data-progress="{{ [(total_co2_saved / 1000) * 100, 100]|min }}"></div></div>
+                        </div>
+                        <div>
+                            <div class="row"><span>Eco trip target</span><span class="mono">{{ ((user.trips_taken / 50) * 100)|round(1) }}%</span></div>
+                            <div class="progress-track"><div class="progress-fill success" data-progress="{{ [(user.trips_taken / 50) * 100, 100]|min }}"></div></div>
+                        </div>
+                        <div>
+                            <div class="row"><span>Money savings target</span><span class="mono">{{ ((total_money_saved / 500) * 100)|round(1) }}%</span></div>
+                            <div class="progress-track"><div class="progress-fill warning" data-progress="{{ [(total_money_saved / 500) * 100, 100]|min }}"></div></div>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="surface-card reveal">
+                    <div class="section-header">
+                        <div>
+                            <div class="eyebrow">Details Panel</div>
+                            <h2>Selected trip insight</h2>
+                        </div>
+                    </div>
+                    <div id="profile-details-panel" class="trip-card">
+                        <strong>Select a recent trip</strong>
+                        <p class="muted">Click any trip below to inspect mode, cost, and emissions details.</p>
+                    </div>
+                </article>
+            </section>
+
+            <section class="surface-card reveal">
+                <div class="section-header">
+                    <div>
+                        <div class="eyebrow">Recent Trips</div>
+                        <h2>Your latest journeys</h2>
+                    </div>
+                </div>
+                <div class="stack">
+                    {% if all_trips %}
+                        {% for trip in all_trips[:6] %}
+                            <button type="button" class="trip-card" data-trip-index="{{ loop.index0 }}">
+                                <div class="row">
+                                    <strong>{{ trip.destination }}</strong>
+                                    <span class="badge info">{{ trip.mode }}</span>
+                                </div>
+                                <div class="muted">{{ trip.timestamp.strftime('%d %b %Y') }} | Rs.{{ trip.cost|round(0)|int }} | {{ "%.2f"|format((trip.co2_emitted|float) / 1000) }} kg CO2</div>
+                            </button>
+                        {% endfor %}
+                    {% else %}
+                        <div class="trip-card">
+                            <strong>No trips yet</strong>
+                            <p class="muted">Start planning from the home dashboard to build your activity history.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </section>
+        </main>
+    </div>
+</div>
+
+<script id="profile-data" type="application/json">{{ {
+    "weekly": weekly_co2,
+    "monthly": monthly_co2,
+    "trips": all_trips_data
+}|tojson }}</script>
+{% endblock %}
