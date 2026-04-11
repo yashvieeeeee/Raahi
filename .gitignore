@@ -1,16 +1,140 @@
+# ============================================================================
+# Sensitive Files & Credentials
+# ============================================================================
+.env
+.env.*
+!.env.example
+config/secrets.json
+*.key
+*.pem
+credentials.json
+*.keystore
+*.jks
+
+# ============================================================================
+# Python & Virtual Environments
+# ============================================================================
+venv/
 .venv/
+env/
+ENV/
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# ============================================================================
+# Testing & Coverage
+# ============================================================================
 .pytest_cache/
 .mypy_cache/
+.tox/
 .coverage
-.env.local
-.DS_Store
+.coverage.*
+htmlcov/
+.hypothesis/
 
+# ============================================================================
+# Logs
+# ============================================================================
+*.log
+*.log.*
+logs/
+
+# ============================================================================
+# Databases
+# ============================================================================
+*.db
+*.sqlite3
+*.sqlite
 instance/*.db
 !instance/.gitkeep
 
+# ============================================================================
+# Machine Learning Artifacts & Models
+# ============================================================================
+*.pkl
+*.pickle
+*.joblib
+*.h5
+*.hdf5
+*.pth
+*.pt
+*.onnx
+raahi_ml/models/
+raahi_ml/data/raw/
+raahi_ml/notebooks/.ipynb_checkpoints/
+
+# ============================================================================
+# Datasets (Large files)
+# ============================================================================
+*.csv
+*.xlsx
+*.xls
+*.json.gz
+*.tar.gz
+*.zip
+*.parquet
+
+# ============================================================================
+# IDE & Editor Files
+# ============================================================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.sublime-project
+.sublime-workspace
+.DS_Store
+Thumbs.db
+*.iml
+*.iws
+*.ipr
+
+# ============================================================================
+# Node.js / Frontend
+# ============================================================================
+node_modules/
+npm-debug.log
+npm-debug.log.*
+yarn-error.log
+.npm
 frontend/static/*.map
 backend/pdf_export_service/node_modules/
+
+# ============================================================================
+# OS Generated Files
+# ============================================================================
+.DS_Store
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# ============================================================================
+# Environment-specific
+# ============================================================================
+.env.local
+.env.*.local
+instance/
+.cache/
+.pytest_cache/
