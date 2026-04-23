@@ -1,3 +1,5 @@
+import os
+
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from backend.database.extensions import db
@@ -5,8 +7,8 @@ from backend.database.models import User
 from backend.services.notification_service import notification_service
 
 
-ADMIN_EMAIL = "admin@raahi.com"
-ADMIN_PASSWORD = "raahi2024"
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "admin@raahi.local").strip().lower()
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "")
 
 
 def _normalize_identity(value):
@@ -19,7 +21,7 @@ def _normalize_identity(value):
 def register_user(name, email_or_phone, password):
     normalized_identity = _normalize_identity(email_or_phone)
 
-    if normalized_identity == ADMIN_EMAIL:
+    if ADMIN_EMAIL and normalized_identity == ADMIN_EMAIL:
         return None, "Admin account cannot be registered from signup"
 
     existing_user = User.query.filter(
@@ -49,7 +51,7 @@ def register_user(name, email_or_phone, password):
 def authenticate_user(email_or_phone, password):
     normalized_identity = _normalize_identity(email_or_phone)
 
-    if normalized_identity == ADMIN_EMAIL and password == ADMIN_PASSWORD:
+    if ADMIN_EMAIL and ADMIN_PASSWORD and normalized_identity == ADMIN_EMAIL and password == ADMIN_PASSWORD:
         admin_user = User.query.filter_by(email=ADMIN_EMAIL).first()
         if not admin_user:
             admin_user = User(

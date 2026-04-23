@@ -17,7 +17,7 @@ const DB_CONFIG = {
   port: process.env.DB_PORT || 5432,
   database: process.env.DB_NAME || "raahi_db",
   user: process.env.DB_USER || "raahi_user",
-  password: process.env.DB_PASSWORD || "raahi_password",
+  password: process.env.DB_PASSWORD || "",
 };
 
 const readMetricsFile = () => {

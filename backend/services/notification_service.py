@@ -13,7 +13,7 @@ load_dotenv()
 
 class NotificationService:
     def __init__(self):
-        self.admin_email = "admin@raahi.com"
+        self.admin_email = os.getenv("ADMIN_EMAIL", "admin@raahi.local")
         self.smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
         self.smtp_port = int(os.getenv("SMTP_PORT", "587"))
         self.smtp_username = os.getenv("SMTP_USERNAME", "")
@@ -50,7 +50,7 @@ Need help? Reply to this email and we're here for you.
 
 Best regards,
 Team Raahi
-admin@raahi.com"""
+{self.admin_email}"""
 
             msg = MIMEMultipart()
             msg["From"] = self.admin_email

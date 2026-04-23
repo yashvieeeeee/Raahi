@@ -5,11 +5,11 @@ services:
     image: postgres:15-alpine
     container_name: raahi-postgres
     environment:
-      POSTGRES_DB: raahi_db
-      POSTGRES_USER: raahi_user
-      POSTGRES_PASSWORD: raahi_password
-      POSTGRES_ADMIN_USER: postgres
-      POSTGRES_ADMIN_PASSWORD: postgres
+      POSTGRES_DB: ${POSTGRES_DB:-raahi_db}
+      POSTGRES_USER: ${POSTGRES_USER:-raahi_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-this-docker-password}
+      POSTGRES_ADMIN_USER: ${POSTGRES_ADMIN_USER:-postgres}
+      POSTGRES_ADMIN_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:-change-this-admin-password}
     ports:
       - "5432:5432"
     volumes:
@@ -17,7 +17,7 @@ services:
       - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U raahi_user -d raahi_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-raahi_user} -d ${POSTGRES_DB:-raahi_db}"]
       interval: 10s
       timeout: 5s
       retries: 5
