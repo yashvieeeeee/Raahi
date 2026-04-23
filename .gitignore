@@ -1,26 +1,12 @@
-# ============================================================================
-# Sensitive Files & Credentials
-# ============================================================================
-.env
-.env.*
-!.env.example
-config/secrets.json
-*.key
-*.pem
-credentials.json
-*.keystore
-*.jks
-
-# ============================================================================
-# Python & Virtual Environments
-# ============================================================================
-venv/
+# Virtual Environments
 .venv/
+venv/
 env/
 ENV/
-.Python
-pip-log.txt
-pip-delete-this-directory.txt
+.env.local
+.env.*.local
+
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
@@ -41,100 +27,69 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
+pip-log.txt
+pip-delete-this-directory.txt
 
-# ============================================================================
-# Testing & Coverage
-# ============================================================================
-.pytest_cache/
-.mypy_cache/
-.tox/
-.coverage
-.coverage.*
-htmlcov/
-.hypothesis/
-
-# ============================================================================
-# Logs
-# ============================================================================
-*.log
-*.log.*
-logs/
-
-# ============================================================================
-# Databases
-# ============================================================================
-*.db
-*.sqlite3
-*.sqlite
-instance/*.db
-!instance/.gitkeep
-
-# ============================================================================
-# Machine Learning Artifacts & Models
-# ============================================================================
-*.pkl
-*.pickle
-*.joblib
-*.h5
-*.hdf5
-*.pth
-*.pt
-*.onnx
-raahi_ml/models/
-raahi_ml/data/raw/
-raahi_ml/notebooks/.ipynb_checkpoints/
-
-# ============================================================================
-# Datasets (Large files)
-# ============================================================================
-*.csv
-*.xlsx
-*.xls
-*.json.gz
-*.tar.gz
-*.zip
-*.parquet
-
-# ============================================================================
-# IDE & Editor Files
-# ============================================================================
+# IDE
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
-.sublime-project
-.sublime-workspace
 .DS_Store
-Thumbs.db
-*.iml
-*.iws
-*.ipr
+*.sublime-project
+*.sublime-workspace
 
-# ============================================================================
-# Node.js / Frontend
-# ============================================================================
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Node.js
 node_modules/
-npm-debug.log
-npm-debug.log.*
-yarn-error.log
-.npm
-frontend/static/*.map
-backend/pdf_export_service/node_modules/
+package-lock.json
+yarn.lock
 
-# ============================================================================
-# OS Generated Files
-# ============================================================================
-.DS_Store
-Thumbs.db
-desktop.ini
-$RECYCLE.BIN/
-
-# ============================================================================
-# Environment-specific
-# ============================================================================
-.env.local
-.env.*.local
+# Database
 instance/
-.cache/
+*.db
+*.sqlite
+*.sqlite3
+
+# Exports & Generated Files
+docs/exports/
+*.pdf
+*.csv.backup
+
+# ML Models (too large to commit, use DVC or LFS)
+raahi_ml/models/**/*.pkl
+raahi_ml/models/**/*.joblib
+raahi_ml/data/processed/
+
+# OS
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+
+# Environment files (keep .env.example only)
+.env
+.env.*.local
+
+# Test coverage
+.coverage
+htmlcov/
 .pytest_cache/
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# Misc
+.agents/
+temp/
+tmp/
+*.bak

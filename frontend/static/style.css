@@ -275,7 +275,7 @@ h2, h3, h4 { margin: 0; }
 .metric-label { margin-top: 12px; color: var(--color-text-secondary); }
 .dark-panel .metric-label, .dark-panel .muted { color: rgba(241, 245, 240, 0.78); }
 
-.dashboard-layout { display: grid; grid-template-columns: 284px minmax(0, 1fr); min-height: 100vh; }
+.dashboard-layout { display: grid; grid-template-columns: 284px minmax(0, 1fr); min-height: 100vh; position: relative; z-index: 1; }
 .sidebar { position: sticky; top: 0; align-self: start; height: 100vh; padding: var(--space-6); border-right: 1px solid var(--color-border); background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(243, 248, 238, 0.94)); }
 .sidebar-group { margin-top: var(--space-8); }
 .sidebar-title { margin-bottom: var(--space-3); color: var(--color-text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; }
@@ -1157,6 +1157,27 @@ button.is-success {
 }
 
 .welcome-page #workflow .surface-card {
+
+/* Skyline Background Styles */
+@keyframes wshimmer {
+    0%, 100% { opacity: 0.15; }
+    50% { opacity: 0.45; }
+}
+
+.skyline-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+.skyline-bg .w {
+    animation: wshimmer 3s ease-in-out infinite;
+}
     position: relative;
     overflow: hidden;
     min-height: 210px;
