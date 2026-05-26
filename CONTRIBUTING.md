@@ -1,171 +1,127 @@
 # Contributing to Raahi
 
-Thank you for your interest in contributing to Raahi! This document provides guidelines for contributing to the project.
+Thanks for helping improve Raahi. This guide covers the basics for setting up the project, making changes, and opening pull requests.
 
 ## Project Structure
 
-```
-raahi/
-├── backend/              # Flask backend application
-│   ├── routes/          # Route handlers (auth, api, web, admin, ml)
-│   ├── services/        # Business logic (11 services)
-│   ├── database/        # SQLAlchemy models & extensions
-│   ├── pdf_export_service/  # Node.js microservice for PDF generation
-│   └── utils/          # Helper functions
-├── raahi_ml/           # Machine learning pipeline
-│   ├── data/           # Raw and processed datasets
-│   ├── models/         # Trained ML models
-│   ├── pipelines/      # Training and preprocessing
-│   └── config/         # ML configuration
-├── frontend/           # Frontend templates & static assets
-│   ├── templates/      # HTML pages
-│   └── static/        # CSS, JavaScript, images
-├── config/            # Application configuration
-├── scripts/           # Utility scripts
-├── logs/              # Application logs
-├── docs/              # Documentation & exports
-├── tests/             # Test suite
-└── instance/          # Instance-specific files (databases, etc.)
+```text
+backend/                    Flask backend application
+  main.py                   App factory and entrypoint
+  routes/                   Auth, web, API, admin, and ML routes
+  services/                 Business logic
+  database/                 SQLAlchemy models and extensions
+  utils/                    Shared helpers
+
+frontend/                   Jinja templates and static assets
+  templates/                HTML pages
+  static/                   CSS, JavaScript, and images
+
+raahi_ml/                   Optional ML pipelines and helpers
+config/                     App configuration
+scripts/                    Utility and database scripts
+tests/                      Test files
 ```
 
-## Development Setup
+## Development Setup and Installation
 
-### Prerequisites
-- Python 3.13+
-- Node.js 20+
-- PostgreSQL 15+
-- Git
+Clone the repository:
 
-### Installation
+```bash
+git clone https://github.com/yashvieeeeee/Raahi.git
+cd Raahi
+```
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/yashvieeeeee/Raahi.git
-   cd Raahi
-   ```
+Create and activate a virtual environment:
 
-2. **Set up Python environment:**
-   ```bash
-   python -m venv .venv
-   .venv\Scripts\Activate  # Windows
-   source .venv/bin/activate  # Linux/Mac
-   pip install -r requirements.txt
-   ```
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate
+```
 
-3. **Configure environment:**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your PostgreSQL credentials and API keys
-   ```
+Install dependencies:
 
-4. **Set up Node.js dependencies (for PDF service):**
-   ```bash
-   cd backend/pdf_export_service
-   npm install
-   cd ../..
-   ```
+```bash
+pip install -r requirements.txt
+```
 
-5. **Initialize database:**
-   ```bash
-   python -m backend.main
-   # This will create tables automatically
-   ```
+Create a local environment file:
 
-## Running the Project
+```powershell
+copy .env.example .env
+```
 
-### Backend
+Run the app:
+
 ```bash
 python -m backend.main
-# Runs on http://localhost:5000
 ```
 
-### PDF Export Service (separate terminal)
-```bash
-cd backend/pdf_export_service
-npm start
-# Runs on http://localhost:3000
+Open:
+
+```text
+http://localhost:5000
 ```
 
-### Docker Compose
-```bash
-docker-compose up -d
-```
+## Code Style and Standards
 
-## Code Style & Standards
-
-### Python
-- Follow PEP 8
-- Use snake_case for variables and functions
-- Use type hints where applicable
-- Keep functions focused and under 50 lines
-
-### JavaScript/Node.js
-- Use ES6+ syntax
-- Use camelCase for variables and functions
-- Add JSDoc comments for functions
-
-### File Organization
-- One class per file in models
-- Related functions together in services
-- Alphabetical imports
-
-## Testing
-
-Run tests before submitting PRs:
-```bash
-pytest tests/ -v
-```
-
-## Commit Messages
-
-Use descriptive commit messages:
-```
-feat: add new feature description
-fix: fix bug description
-refactor: improve code structure
-docs: update documentation
-test: add/update tests
-chore: maintenance tasks
-```
+- Keep changes focused and easy to review.
+- Follow the existing Flask route/service structure.
+- Put business logic in `backend/services/`.
+- Keep route handlers thin.
+- Use clear names for functions, variables, and files.
+- Do not commit `.env`, `.venv`, logs, database files, notebooks, or generated model files.
+- Add comments only when they explain non-obvious logic.
 
 ## Pull Request Process
 
-1. Create a feature branch: `git checkout -b feature/your-feature`
-2. Make your changes
-3. Run tests: `pytest tests/ -v`
-4. Commit with descriptive messages
-5. Push to your fork
-6. Create a Pull Request with:
-   - Clear description of changes
-   - Reference to related issues
-   - Screenshots (if UI changes)
+1. Create a branch:
+
+```bash
+git checkout -b feature/short-name
+```
+
+2. Make your changes.
+3. Run the app locally.
+4. Run tests if available:
+
+```bash
+python -m pytest tests -q
+```
+
+5. Commit with a clear message:
+
+```text
+fix: handle missing database connection
+docs: clean up setup guide
+feat: add route planner summary
+```
+
+6. Push your branch and open a pull request.
+
+In your pull request, include:
+
+- What changed
+- Why the change was needed
+- Screenshots for UI changes, if useful
+- Any tests run or skipped
 
 ## Known Issues
 
-- PDF export requires Puppeteer (headless Chrome) - large binary
-- ML model predictions require loaded .pkl files
-- PostgreSQL required (SQLite fallback available for development)
+- Full ML dependencies can be too large for Vercel serverless deployments.
+- ML features may need local model files that are not committed to the repo.
+- Database-backed pages require a valid `DATABASE_URL`.
+- The PDF export service is separate from the main Flask app.
 
 ## Performance Guidelines
 
-- Keep API responses under 500ms
-- Cache expensive queries
-- Lazy load ML models on first request
-- Use connection pooling for database
-
-## Security Guidelines
-
-- Never commit .env files (use .env.example)
-- Validate all user inputs
-- Use parameterized queries (SQLAlchemy ORM)
-- Keep dependencies updated
+- Keep database queries simple and scoped.
+- Avoid loading heavy ML assets during app startup.
+- Keep Vercel production dependencies lightweight.
+- Move expensive work into services instead of route handlers.
+- Cache or reuse results when an API call or calculation is expensive.
 
 ## Questions?
 
-- Check [ARCHITECTURE.md](docs/ARCHITECTURE.md) for project overview
-- Review service documentation in [backend/](backend/)
-- Open an issue for questions
-
----
-
-Happy contributing! 🚀
+- Check `README.md` for setup and deployment notes.
+- Check `CLOUD_DB_SETUP.md` for cloud database setup.
+- Open an issue if something is unclear or broken.
