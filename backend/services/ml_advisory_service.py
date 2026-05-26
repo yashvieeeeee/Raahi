@@ -1,8 +1,16 @@
 from __future__ import annotations
 
-import joblib
-import numpy as np
-import pandas as pd
+import math
+
+try:
+    import joblib
+except ImportError:
+    joblib = None
+
+try:
+    import pandas as pd
+except ImportError:
+    pd = None
 
 from raahi_ml.config.paths import MODELS_DIR, PROCESSED_DATA_DIR
 
@@ -11,10 +19,13 @@ class AdvisoryModelService:
     def __init__(self):
         self.model = None
         self.label_encoder = None
-        self.df = pd.DataFrame()
+        self.df = None
         self._load_assets()
 
     def _load_assets(self):
+        if joblib is None:
+            return
+
         try:
             self.model = joblib.load(MODELS_DIR / "model.pkl")
         except Exception as exc:
@@ -25,13 +36,14 @@ class AdvisoryModelService:
         except Exception as exc:
             print(f"Error loading label encoder: {exc}")
 
-        try:
-            self.df = pd.read_csv(PROCESSED_DATA_DIR / "raahi_with_predictions.csv")
-        except Exception as exc:
-            print(f"Error loading processed dataset: {exc}")
+        if pd is not None:
+            try:
+                self.df = pd.read_csv(PROCESSED_DATA_DIR / "raahi_with_predictions.csv")
+            except Exception as exc:
+                print(f"Error loading processed dataset: {exc}")
 
     def get_stations(self):
-        if not self.df.empty and "station_name" in self.df.columns:
+        if self.df is not None and not self.df.empty and "station_name" in self.df.columns:
             return sorted(self.df["station_name"].dropna().unique().tolist())
 
         return [
@@ -77,7 +89,7 @@ class AdvisoryModelService:
         passenger_count = int(payload.get("passenger_count", 1000))
 
         peak_hour_weight = 3.0 if hour in [8, 9, 18, 19] else 2.0 if hour in [7, 10, 17, 20] else 1.0
-        log_passenger_count = np.log1p(passenger_count)
+        log_passenger_count = math.log1p(passenger_count)
         speed_diff = avg_road_speed - (60 - predicted_delay)
         aqi_category = min(5, int(aqi_value // 80))
         monsoon_impact = round(

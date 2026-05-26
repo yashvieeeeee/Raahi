@@ -10,12 +10,6 @@ dependencies = [
     "psycopg2-binary",
     "gunicorn",
     "requests==2.32.3",
-    "pandas==2.2.2",
-    "numpy==1.26.4",
-    "scikit-learn==1.5.1",
-    "joblib==1.4.2",
-    "folium==0.17.0",
-    "xgboost>=2.0.0",
 ]
 
 [tool.vercel]

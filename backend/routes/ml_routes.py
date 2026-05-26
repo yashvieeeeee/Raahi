@@ -5,17 +5,26 @@ from __future__ import annotations
 from flask import Blueprint, jsonify, request
 from flask_login import current_user, login_required
 
-from backend.services.ml_service import (
-    get_available_models,
-    get_delay_estimate,
-    get_model_metrics,
-    get_route_recommendation,
-    get_transport_mode,
-    retrain_model,
-)
-
 
 ml_blueprint = Blueprint("ml_routes", __name__)
+
+
+def _load_ml_service():
+    try:
+        from backend.services import ml_service
+
+        return ml_service
+    except Exception as exc:
+        return exc
+
+
+def _ml_unavailable(exc):
+    return jsonify(
+        {
+            "error": "ML features are unavailable in this deployment.",
+            "details": str(exc),
+        }
+    ), 503
 
 
 def _admin_guard():
@@ -27,21 +36,33 @@ def _admin_guard():
 @ml_blueprint.post("/api/ml/predict-mode")
 def predict_mode():
     """Return the predicted transport mode."""
-    result = get_transport_mode(request.get_json() or {})
+    service = _load_ml_service()
+    if isinstance(service, Exception):
+        return _ml_unavailable(service)
+
+    result = service.get_transport_mode(request.get_json() or {})
     return jsonify(result), 400 if "error" in result else 200
 
 
 @ml_blueprint.post("/api/ml/predict-delay")
 def predict_delay_route():
     """Return the predicted station delay."""
-    result = get_delay_estimate(request.get_json() or {})
+    service = _load_ml_service()
+    if isinstance(service, Exception):
+        return _ml_unavailable(service)
+
+    result = service.get_delay_estimate(request.get_json() or {})
     return jsonify(result), 400 if "error" in result else 200
 
 
 @ml_blueprint.post("/api/ml/recommend-route")
 def recommend_route():
     """Return route recommendation classification."""
-    result = get_route_recommendation(request.get_json() or {})
+    service = _load_ml_service()
+    if isinstance(service, Exception):
+        return _ml_unavailable(service)
+
+    result = service.get_route_recommendation(request.get_json() or {})
     return jsonify(result), 400 if "error" in result else 200
 
 
@@ -53,10 +74,14 @@ def ml_health():
     if guard_response:
         return guard_response
 
+    service = _load_ml_service()
+    if isinstance(service, Exception):
+        return _ml_unavailable(service)
+
     return jsonify(
         {
             "status": "ok",
-            "models": get_available_models(),
+            "models": service.get_available_models(),
             "default_model": "model",
         }
     )
@@ -71,7 +96,11 @@ def ml_metrics(model_name: str):
         return guard_response
 
     try:
-        return jsonify(get_model_metrics(model_name))
+        service = _load_ml_service()
+        if isinstance(service, Exception):
+            return _ml_unavailable(service)
+
+        return jsonify(service.get_model_metrics(model_name))
     except Exception as exc:
         return jsonify({"error": str(exc)}), 400
 
@@ -85,6 +114,10 @@ def ml_retrain(model_name: str):
         return guard_response
 
     try:
-        return jsonify(retrain_model(model_name))
+        service = _load_ml_service()
+        if isinstance(service, Exception):
+            return _ml_unavailable(service)
+
+        return jsonify(service.retrain_model(model_name))
     except Exception as exc:
         return jsonify({"error": str(exc)}), 400

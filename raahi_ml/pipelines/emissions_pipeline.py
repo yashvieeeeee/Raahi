@@ -1,11 +1,19 @@
-import pandas as pd
+try:
+    import pandas as pd
+except ImportError:
+    pd = None
 
 from raahi_ml.config.paths import RAW_DATA_DIR
 
 
 class EmissionsCalculator:
     def __init__(self):
-        self.df = pd.read_csv(RAW_DATA_DIR / "vehicle_emission_dataset.csv")
+        self.df = None
+        if pd is not None:
+            try:
+                self.df = pd.read_csv(RAW_DATA_DIR / "vehicle_emission_dataset.csv")
+            except Exception as exc:
+                print(f"Error loading emissions dataset: {exc}")
         self.current_fuel_prices = self.get_realtime_fuel_prices()
 
     def get_realtime_fuel_prices(self):
@@ -23,6 +31,9 @@ class EmissionsCalculator:
         road_type="City",
         traffic="Moderate",
     ):
+        if self.df is None:
+            return None
+
         mask = (
             (self.df["Vehicle Type"] == vehicle_type)
             & (self.df["Fuel Type"] == fuel_type)

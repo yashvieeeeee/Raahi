@@ -2,7 +2,10 @@
 
 import math
 
-import pandas as pd
+try:
+    import pandas as pd
+except ImportError:
+    pd = None
 
 from raahi_ml.config.paths import RAW_DATA_DIR
 
@@ -39,6 +42,10 @@ class BusFareCalculator:
         self.load_bus_depots()
 
     def load_bus_depots(self):
+        if pd is None:
+            self.bus_depots = []
+            return
+
         try:
             self.bus_depots = pd.read_csv(RAW_DATA_DIR / "bus_depots.csv")
         except Exception as exc:
@@ -65,7 +72,7 @@ class BusFareCalculator:
         return earth_radius_km * c
 
     def find_nearest_depot(self, lat, lon):
-        if self.bus_depots.empty or lat is None or lon is None:
+        if pd is None or self.bus_depots.empty or lat is None or lon is None:
             return None
 
         min_distance = float("inf")
@@ -137,7 +144,7 @@ class BusFareCalculator:
         }
 
     def get_all_depots(self):
-        if self.bus_depots.empty:
+        if pd is None or self.bus_depots.empty:
             return []
         return self.bus_depots.to_dict("records")
 
