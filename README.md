@@ -14,12 +14,12 @@ Live app: `https://raahi-wine.vercel.app`
 
 ## Tech Stack
 
-| Backend - Flask, Flask-Login, Flask-SQLAlchemy 
-| Frontend - Jinja2, CSS, JavaScript 
-| Database - PostgreSQL 
-| APIs -  Google Maps, WAQI, OpenAQ
-| Deployment - Vercel 
-| Optional ML - pandas, scikit-learn, XGBoost, joblib
+- Backend - Flask, Flask-Login, Flask-SQLAlchemy
+- Frontend - Jinja2, CSS, JavaScript
+- Database - PostgreSQL
+- APIs -  Google Maps, WAQI, OpenAQ
+- Deployment - Vercel
+- Optional ML - pandas, scikit-learn, XGBoost, joblib
 
 ## Project Map
 
