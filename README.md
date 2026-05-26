@@ -1,4 +1,4 @@
-# 🚌 Raahi - Smart Commuting Assistant
+# Raahi
 
 ![Python](https://img.shields.io/badge/Python-3.12-blue)
 ![Flask](https://img.shields.io/badge/Flask-3.0.3-black)
@@ -7,7 +7,7 @@
 
 Smart Commuting Intelligence for Safer, Cleaner, and Better Daily Travel
 
-An intelligent commuting assistant that helps users optimize their public transportation journey with real-time air quality data, fare predictions, and route recommendations. Built with Flask, PostgreSQL, and machine learning models.
+Raahi is a Flask-based commuting assistant that helps users compare travel options, check air quality, track trips, and understand the cost and CO2 impact of their route choices.
 
 Live app: `https://raahi-wine.vercel.app`
 
@@ -42,44 +42,72 @@ The goal is simple: help people travel smarter without needing to understand map
 
 ## Project Refinements
 
-### 1. Vercel-Ready Deployment
+### 1. Cleaner Commuter Experience
 
-Raahi is configured for Vercel using `pyproject.toml` with the Flask entrypoint:
+Raahi keeps the commuter flow simple: enter a destination, compare travel options, and understand the tradeoffs. The interface avoids technical language and focuses on practical outputs like time, fare, CO2 impact, and AQI context.
+
+### 2. AQI-Aware Route Planning
+
+Route suggestions are not only about speed. Raahi adds air-quality awareness so users can think about exposure, sustainability, and comfort while choosing how to travel.
+
+### 3. Personal Impact Tracking
+
+The profile dashboard turns saved trips into useful feedback. Users can see trips taken, money saved, and CO2 saved, making daily commute choices feel measurable instead of invisible.
+
+### 4. Admin Intelligence Dashboard
+
+Admins get a higher-level view of users, trips, route activity, AQI summaries, and optional model metrics. This makes Raahi easier to monitor as a working mobility platform rather than just a route form.
+
+### 5. Vercel-Ready Production Setup
+
+Raahi is configured for Vercel using `pyproject.toml` with the Flask app entrypoint:
 
 ```toml
 [tool.vercel]
 entrypoint = "backend.main:app"
 ```
 
-### 2. Lightweight Production Build
+### 6. Lightweight Serverless Build
 
-Vercel serverless functions have strict bundle limits, so the production deployment keeps dependencies lightweight. Heavy ML packages are optional and better suited for local development or a separate ML service.
+Vercel serverless functions have strict bundle limits, so production dependencies are kept lightweight. Heavy ML packages are treated as optional and are better suited for local development or a separate ML service.
 
-### 3. Safer Startup
+### 7. Safer Startup Behavior
 
 The app logs database initialization errors instead of crashing immediately. Public pages can still load, while login and database-backed pages require a valid `DATABASE_URL`.
 
-### 4. Cleaner Deployment Package
+### 8. Cleaner Deployment Package
 
 `.vercelignore` excludes local-only files like `.venv`, logs, notebooks, datasets, and generated model artifacts.
 
 ## Technical Features
 
-### Backend
+### Flask Backend
 
-Built with Flask, Flask-Login, and Flask-SQLAlchemy. Routes are split by purpose: auth, web pages, APIs, admin tools, and optional ML endpoints.
+Built with Flask, Flask-Login, and Flask-SQLAlchemy. The backend is organized into focused route modules for authentication, web pages, APIs, admin tools, and optional ML endpoints.
 
-### Database
+### PostgreSQL Data Layer
 
-Uses PostgreSQL through SQLAlchemy. Local development can use Docker PostgreSQL, while production should use an externally reachable cloud database URL.
+Uses SQLAlchemy models for users and trips. Local development can run PostgreSQL through Docker, while production uses an externally reachable cloud database URL.
 
-### Route and AQI Intelligence
+### Route and Fare Intelligence
 
-Raahi combines route distance estimates, fare calculations, emissions estimates, and AQI data to help users compare travel choices.
+Raahi estimates route distance, travel time, fare, and CO2 impact across multiple commute modes. This helps users compare options without switching between different tools.
 
-### Optional ML Layer
+### Air Quality Integration
+
+AQI data is used to add environmental context to commuting decisions. The app is designed to support external air-quality providers such as WAQI and OpenAQ.
+
+### Admin Analytics
+
+The admin layer summarizes user activity, trip counts, route usage, AQI patterns, and model availability. It gives maintainers a compact view of how the platform is being used.
+
+### Optional ML Advisory Layer
 
 The `raahi_ml/` folder contains optional model pipelines and helpers. These are useful for local experimentation, but are not part of the lightweight Vercel production bundle.
+
+### Serverless Deployment Guardrails
+
+The Vercel deployment excludes virtual environments, logs, notebooks, generated datasets, and model artifacts. This keeps the deployed function small enough for serverless limits.
 
 ## Project Structure
 
@@ -94,17 +122,29 @@ tests/        Test files
 
 ## Getting Started
 
-### 1. Clone the Project
+### 1. Frontend
 
 ```bash
-git clone https://github.com/yashvieeeeee/Raahi.git
-cd Raahi
+# Frontend is served through Flask templates
 ```
 
-### 2. Create a Virtual Environment
+### 2. Backend
 
 ```powershell
+# Create and activate virtual environment
 python -m venv .venv
-.venv\Scripts\Activate
+.\.venv\Scripts\Activate.ps1
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Create environment file
+copy .env.example .env
+
+# Start the backend server
+python -m backend.main
 ```
 
+## License
+
+MIT License - see LICENSE for details.
