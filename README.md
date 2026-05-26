@@ -58,26 +58,9 @@ The profile dashboard turns saved trips into useful feedback. Users can see trip
 
 Admins get a higher-level view of users, trips, route activity, AQI summaries, and optional model metrics. This makes Raahi easier to monitor as a working mobility platform rather than just a route form.
 
-### 5. Vercel-Ready Production Setup
-
-Raahi is configured for Vercel using `pyproject.toml` with the Flask app entrypoint:
-
-```toml
-[tool.vercel]
-entrypoint = "backend.main:app"
-```
-
-### 6. Lightweight Serverless Build
+### 5. Lightweight Serverless Build
 
 Vercel serverless functions have strict bundle limits, so production dependencies are kept lightweight. Heavy ML packages are treated as optional and are better suited for local development or a separate ML service.
-
-### 7. Safer Startup Behavior
-
-The app logs database initialization errors instead of crashing immediately. Public pages can still load, while login and database-backed pages require a valid `DATABASE_URL`.
-
-### 8. Cleaner Deployment Package
-
-`.vercelignore` excludes local-only files like `.venv`, logs, notebooks, datasets, and generated model artifacts.
 
 ## Technical Features
 
@@ -104,10 +87,6 @@ The admin layer summarizes user activity, trip counts, route usage, AQI patterns
 ### Optional ML Advisory Layer
 
 The `raahi_ml/` folder contains optional model pipelines and helpers. These are useful for local experimentation, but are not part of the lightweight Vercel production bundle.
-
-### Serverless Deployment Guardrails
-
-The Vercel deployment excludes virtual environments, logs, notebooks, generated datasets, and model artifacts. This keeps the deployed function small enough for serverless limits.
 
 ## Project Structure
 
