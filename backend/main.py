@@ -5,6 +5,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from flask import Flask
+from sqlalchemy.exc import SQLAlchemyError
 
 
 if __package__ in {None, ""}:
@@ -47,7 +48,10 @@ def create_app():
     app.register_blueprint(ml_blueprint)
 
     with app.app_context():
-        db.create_all()
+        try:
+            db.create_all()
+        except SQLAlchemyError as exc:
+            app.logger.error("Database initialization failed: %s", exc)
 
     return app
 
