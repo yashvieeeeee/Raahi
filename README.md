@@ -1,4 +1,4 @@
-# Raahi
+# 🚌 Raahi - Smart Commuting Assistant
 
 ![Python](https://img.shields.io/badge/Python-3.12-blue)
 ![Flask](https://img.shields.io/badge/Flask-3.0.3-black)
@@ -7,7 +7,7 @@
 
 Smart Commuting Intelligence for Safer, Cleaner, and Better Daily Travel
 
-Raahi is a Flask-based commuting assistant that helps users compare travel options, check air quality, track trips, and understand the cost and CO2 impact of their route choices.
+An intelligent commuting assistant that helps users optimize their public transportation journey with real-time air quality data, fare predictions, and route recommendations. Built with Flask, PostgreSQL, and machine learning models.
 
 Live app: `https://raahi-wine.vercel.app`
 
