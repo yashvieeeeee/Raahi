@@ -77,9 +77,17 @@ raahi_ml/models/model_metrics.json
 .LSOverride
 Thumbs.db
 
-# Environment files (keep .env.example only)
+# Environment and secret files
 .env
+.env.*
+!.env.example
 .env.*.local
+*.key
+*.pem
+*.p12
+*.pfx
+secrets/
+replacements.txt
 
 # Test coverage
 .coverage
