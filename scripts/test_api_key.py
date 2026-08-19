@@ -5,7 +5,7 @@ Simple Google API Key Test
 
 import requests
 
-API_KEY = "AIzaSyBZrGSUuzA_dD8-nMgyn7QKwnzVc4oZ6Y8"
+API_KEY = "REMOVED_GOOGLE_MAPS_KEY"
 
 def test_api_key():
     """Test if the Google API key is working"""

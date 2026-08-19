@@ -7,7 +7,7 @@ Tests all Google Maps services with your API key
 import requests
 import json
 
-API_KEY = "AIzaSyBZrGSUuzA_dD8-nMgyn7QKwnzVc4oZ6Y8"
+API_KEY = "REMOVED_GOOGLE_MAPS_KEY"
 
 def test_places_api():
     """Test Google Places API"""

@@ -68,6 +68,8 @@ docs/exports/
 raahi_ml/models/**/*.pkl
 raahi_ml/models/**/*.joblib
 raahi_ml/data/processed/
+raahi_ml/data/raw/
+raahi_ml/models/model_metrics.json
 
 # OS
 .DS_Store
@@ -93,3 +95,5 @@ docker-compose.override.yml
 temp/
 tmp/
 *.bak
+.vercel
+.env*
