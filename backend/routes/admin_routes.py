@@ -152,10 +152,9 @@ def register_admin_routes(app):
                 })
 
             # Delete orphaned trips
-            with db.session.begin_nested():
-                for trip in orphaned_trips:
-                    db.session.delete(trip)
-                db.session.commit()
+            for trip in orphaned_trips:
+                db.session.delete(trip)
+            db.session.commit()
 
             return jsonify({
                 "success": True,
