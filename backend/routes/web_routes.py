@@ -1,7 +1,9 @@
+import math
+
 from flask import jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
-from backend.database.extensions import db
+from backend.database.extensions import db, limiter
 from backend.database.models import Trip
 from backend.services.air_quality_service import get_aqi_for_user
 from backend.services.home_service import build_home_dashboard_context
@@ -14,13 +16,32 @@ from backend.services.route_planner_service import (
 from backend.services.trip_service import save_user_location
 
 
+def _safe_float(val, default: float) -> float:
+    """Safely convert value to float, handling null, None, NaN, and invalid strings."""
+    if val is None:
+        return default
+    if isinstance(val, (int, float)):
+        val_float = float(val)
+        return default if (math.isnan(val_float) or math.isinf(val_float)) else val_float
+    val_str = str(val).strip().lower()
+    if val_str in {"", "null", "undefined", "none", "nan", "false", "true"}:
+        return default
+    try:
+        parsed = float(val_str)
+        if math.isnan(parsed) or math.isinf(parsed):
+            return default
+        return parsed
+    except (TypeError, ValueError):
+        return default
+
+
 def register_web_routes(app):
     def _get_user_origin():
         raw_location = getattr(current_user, "location", None)
         if raw_location and "," in str(raw_location):
             try:
                 lat_str, lon_str = str(raw_location).split(",", 1)
-                return float(lat_str.strip()), float(lon_str.strip())
+                return _safe_float(lat_str, 19.0760), _safe_float(lon_str, 72.8777)
             except (TypeError, ValueError):
                 pass
         return 19.0760, 72.8777
@@ -67,14 +88,15 @@ def register_web_routes(app):
 
     @app.route("/route-planner")
     @login_required
+    @limiter.limit("20 per minute")
     def route_planner():
         destination = request.args.get("dest")
         if not destination:
             return redirect(url_for("home"))
 
         default_lat, default_lon = _get_user_origin()
-        user_lat = float(request.args.get("lat", default_lat))
-        user_lon = float(request.args.get("lon", default_lon))
+        user_lat = _safe_float(request.args.get("lat"), default_lat)
+        user_lon = _safe_float(request.args.get("lon"), default_lon)
 
         try:
             dest_lat, dest_lon = geocode_destination(destination)

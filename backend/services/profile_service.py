@@ -18,8 +18,8 @@ def build_profile_context(user):
         for trip in all_trips
     ]
 
-    total_co2_saved = float(user.co2_saved or 0)
-    total_money_saved = float(user.money_saved or 0)
+    total_co2_saved = max(0.0, float(user.co2_saved or 0))
+    total_money_saved = max(0.0, float(user.money_saved or 0))
 
     weekly_trips = (
         Trip.query.filter_by(user_id=user.id)

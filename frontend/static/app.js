@@ -3,12 +3,18 @@
     const stack = document.getElementById("toast-stack");
 
     const showToast = (message) => {
-        if (!stack) return;
+        let toastStack = document.getElementById("toast-stack");
+        if (!toastStack) {
+            toastStack = document.createElement("div");
+            toastStack.id = "toast-stack";
+            toastStack.className = "toast-stack";
+            document.body.appendChild(toastStack);
+        }
         const item = document.createElement("div");
         item.className = "toast";
         item.textContent = message;
-        stack.appendChild(item);
-        window.setTimeout(() => item.remove(), 3200);
+        toastStack.appendChild(item);
+        window.setTimeout(() => item.remove(), 4000);
     };
 
     const gramsToKg = (value) => (Number(value || 0) / 1000).toFixed(2);
@@ -324,83 +330,170 @@
 
     const initHomePage = () => {
         const form = document.getElementById("planner-search-form");
+        const originSelect = document.getElementById("origin-select");
+        const currentLocationOption = document.getElementById("option-current-location");
+        const gpsStatusLabel = document.getElementById("gps-status-label");
+        const btnDetectGps = document.getElementById("btn-detect-gps");
+        const originHelperText = document.getElementById("origin-helper-text");
+
         const dashboardDataNode = document.getElementById("home-dashboard-data");
         const dashboardData = dashboardDataNode ? JSON.parse(dashboardDataNode.textContent) : null;
-        let userLat = Number(dashboardData?.user_origin?.lat) || null;
-        let userLon = Number(dashboardData?.user_origin?.lon) || null;
-        
-        // Use default Mumbai location only if no saved location
         const defaultLat = 19.0760;
         const defaultLon = 72.8777;
+        const savedLat = Number(dashboardData?.user_origin?.lat);
+        const savedLon = Number(dashboardData?.user_origin?.lon);
+        let userLat = (!isNaN(savedLat) && savedLat !== 0) ? savedLat : defaultLat;
+        let userLon = (!isNaN(savedLon) && savedLon !== 0) ? savedLon : defaultLon;
+        const hasSavedLocation = Boolean(dashboardData?.user_origin?.lat && dashboardData?.user_origin?.lon);
 
-        if (!userLat || !userLon) {
-            // Try to detect browser location if not already saved
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    async (position) => {
-                        userLat = position.coords.latitude;
-                        userLon = position.coords.longitude;
-                        
-                        // Save detected location to backend
+        const updateLocationState = (lat, lon, labelText, isGps = false) => {
+            userLat = lat;
+            userLon = lon;
+            if (currentLocationOption) {
+                currentLocationOption.text = `📍 ${labelText} (${lat.toFixed(3)}, ${lon.toFixed(3)})`;
+                currentLocationOption.value = `${lat},${lon}`;
+                currentLocationOption.disabled = false;
+            }
+            if (originSelect) {
+                originSelect.value = `${lat},${lon}`;
+                if (originSelect.selectedIndex === -1 && currentLocationOption) {
+                    currentLocationOption.selected = true;
+                }
+            }
+            if (gpsStatusLabel) {
+                gpsStatusLabel.textContent = isGps ? "GPS Active" : "Detect GPS";
+            }
+        };
+
+        const requestGps = (interactive = false) => {
+            if (!navigator.geolocation) {
+                if (gpsStatusLabel) gpsStatusLabel.textContent = "GPS Unavailable";
+                if (currentLocationOption) {
+                    currentLocationOption.text = "📍 GPS Unavailable (Select hub below)";
+                    currentLocationOption.disabled = true;
+                }
+                if (originSelect && (originSelect.value === "current" || !originSelect.value)) {
+                    originSelect.value = "19.0760,72.8777";
+                }
+                if (originHelperText) {
+                    originHelperText.textContent = "Geolocation is unavailable on this device. Select your starting hub above.";
+                }
+                if (interactive) showToast("Geolocation is not supported by your browser.");
+                return;
+            }
+
+            if (gpsStatusLabel) gpsStatusLabel.textContent = "Detecting...";
+            if (originHelperText) originHelperText.textContent = "Detecting high-accuracy GPS coordinates...";
+
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const newLat = position.coords.latitude;
+                    const newLon = position.coords.longitude;
+                    updateLocationState(newLat, newLon, "Detected GPS", true);
+                    if (originHelperText) {
+                        originHelperText.textContent = "Live GPS coordinates detected and active.";
+                    }
+                    if (interactive) showToast("GPS location detected successfully.");
+
+                    try {
+                        const res = await fetch("/save-location", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ latitude: newLat, longitude: newLon })
+                        });
+                        if (!res.ok) console.warn("Failed to persist location:", res.status);
+                    } catch (e) {
+                        console.warn("Could not save detected location:", e);
+                    }
+                },
+                (err) => {
+                    const isDenied = err.code === 1;
+                    if (gpsStatusLabel) gpsStatusLabel.textContent = isDenied ? "GPS Denied" : "GPS Failed";
+                    if (currentLocationOption) {
+                        currentLocationOption.text = isDenied
+                            ? "📍 GPS Denied (Select starting hub below)"
+                            : "📍 GPS Timed Out (Select hub below)";
+                        currentLocationOption.disabled = true;
+                    }
+                    if (originSelect && (originSelect.value === "current" || !originSelect.value)) {
+                        originSelect.value = "19.0760,72.8777";
+                        userLat = defaultLat;
+                        userLon = defaultLon;
+                    }
+                    if (originHelperText) {
+                        originHelperText.textContent = isDenied
+                            ? "Location access denied. Please select your starting neighborhood from the dropdown."
+                            : "GPS request timed out. Select your starting neighborhood from the dropdown.";
+                    }
+                    if (interactive) {
+                        showToast(isDenied
+                            ? "Location access denied. Please select your starting hub below."
+                            : "Could not detect GPS. Please pick a neighborhood from the list.");
+                    }
+                },
+                { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+            );
+        };
+
+        if (hasSavedLocation) {
+            updateLocationState(savedLat, savedLon, "Saved Location", false);
+            if (originHelperText) {
+                originHelperText.textContent = "Using your saved location. Choose a hub or re-detect GPS.";
+            }
+        } else {
+            requestGps(false);
+        }
+
+        originSelect?.addEventListener("change", async () => {
+            const val = originSelect.value;
+            if (!val || val === "current") return;
+            const parts = val.split(",");
+            if (parts.length === 2) {
+                const pLat = parseFloat(parts[0]);
+                const pLon = parseFloat(parts[1]);
+                if (!isNaN(pLat) && !isNaN(pLon)) {
+                    userLat = pLat;
+                    userLon = pLon;
+                    const hubName = originSelect.options[originSelect.selectedIndex]?.text || "Selected hub";
+                    if (originHelperText) {
+                        originHelperText.textContent = `Starting from ${hubName}.`;
+                    }
+                    showToast(`Starting location set to ${hubName}`);
+                    try {
+                        await fetch("/save-location", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ latitude: userLat, longitude: userLon })
+                        });
+                    } catch (_) {}
+                }
+            }
+        });
+
+        btnDetectGps?.addEventListener("click", () => requestGps(true));
+
+        if (hasSavedLocation && navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const newLat = position.coords.latitude;
+                    const newLon = position.coords.longitude;
+                    const dist = Math.sqrt(Math.pow(newLat - userLat, 2) + Math.pow(newLon - userLon, 2));
+                    if (dist > 0.001) {
+                        updateLocationState(newLat, newLon, "Updated GPS", true);
                         try {
                             await fetch("/save-location", {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({
-                                    latitude: userLat,
-                                    longitude: userLon
-                                })
+                                body: JSON.stringify({ latitude: newLat, longitude: newLon })
                             });
                         } catch (e) {
-                            console.log("Could not save detected location:", e);
+                            console.warn("Could not update location:", e);
                         }
-                    },
-                    () => {
-                        // Fallback to default Mumbai location
-                        userLat = defaultLat;
-                        userLon = defaultLon;
-                    },
-                    {
-                        enableHighAccuracy: true,
-                        timeout: 8000,
-                        maximumAge: 0
                     }
-                );
-            } else {
-                // Geolocation not available, use default
-                userLat = defaultLat;
-                userLon = defaultLon;
-            }
-        } else {
-            // User has saved location, try to update it in background
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    async (position) => {
-                        const newLat = position.coords.latitude;
-                        const newLon = position.coords.longitude;
-                        // Only update if significantly different (> 100m)
-                        const dist = Math.sqrt(Math.pow(newLat - userLat, 2) + Math.pow(newLon - userLon, 2));
-                        if (dist > 0.001) {
-                            userLat = newLat;
-                            userLon = newLon;
-                            try {
-                                await fetch("/save-location", {
-                                    method: "POST",
-                                    headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify({
-                                        latitude: userLat,
-                                        longitude: userLon
-                                    })
-                                });
-                            } catch (e) {
-                                console.log("Could not update location:", e);
-                            }
-                        }
-                    },
-                    () => {},
-                    { enableHighAccuracy: true, timeout: 5000, maximumAge: 30000 }
-                );
-            }
+                },
+                () => {},
+                { enableHighAccuracy: true, timeout: 5000, maximumAge: 30000 }
+            );
         }
 
         if (dashboardData) {
@@ -462,10 +555,25 @@
             event.preventDefault();
             const input = document.getElementById("destination-input");
             if (!input || !input.value.trim()) return;
+
+            if (originSelect && originSelect.value && originSelect.value !== "current") {
+                const parts = originSelect.value.split(",");
+                if (parts.length === 2) {
+                    const pLat = parseFloat(parts[0]);
+                    const pLon = parseFloat(parts[1]);
+                    if (!isNaN(pLat) && !isNaN(pLon)) {
+                        userLat = pLat;
+                        userLon = pLon;
+                    }
+                }
+            }
+
+            const validLat = (userLat !== null && !isNaN(Number(userLat))) ? userLat : defaultLat;
+            const validLon = (userLon !== null && !isNaN(Number(userLon))) ? userLon : defaultLon;
             const query = new URLSearchParams({
                 dest: input.value.trim(),
-                lat: userLat,
-                lon: userLon
+                lat: validLat,
+                lon: validLon
             });
             window.location.href = `/route-planner?${query.toString()}`;
         });
@@ -618,7 +726,14 @@
                             cost: Number(card.dataset.cost)
                         })
                     });
-                    if (!response.ok) throw new Error("Trip save failed");
+                    if (!response.ok) {
+                        let errMsg = "Trip save failed";
+                        try {
+                            const errData = await response.json();
+                            if (errData && errData.message) errMsg = errData.message;
+                        } catch (_) {}
+                        throw new Error(errMsg);
+                    }
                     const query = new URLSearchParams({
                         destination: config.destination,
                         vehicle: card.dataset.vehicle,
@@ -628,7 +743,7 @@
                     });
                     window.location.href = `/map-navigation?${query.toString()}`;
                 } catch (error) {
-                    showToast("Could not save trip. Please try again.");
+                    showToast(error.message || "Could not save trip. Please try again.");
                 }
             });
         });
@@ -637,10 +752,12 @@
             event.preventDefault();
             const input = document.getElementById("new-destination-input");
             if (!input || !input.value.trim() || !config) return;
+            const validLat = (config.user_lat !== null && !isNaN(Number(config.user_lat))) ? config.user_lat : 19.0760;
+            const validLon = (config.user_lon !== null && !isNaN(Number(config.user_lon))) ? config.user_lon : 72.8777;
             const query = new URLSearchParams({
                 dest: input.value.trim(),
-                lat: config.user_lat,
-                lon: config.user_lon
+                lat: validLat,
+                lon: validLon
             });
             window.location.href = `/route-planner?${query.toString()}`;
         });
@@ -867,7 +984,10 @@
 
         loadModelOptions()
             .then(() => fetchMetrics(selector?.value || defaultModel))
-            .catch(() => {});
+            .catch((err) => {
+                console.warn("Failed to load ML model options or metrics:", err);
+                showToast(err.message || "Could not load ML metrics from server.");
+            });
 
         selector?.addEventListener("change", async () => {
             try {

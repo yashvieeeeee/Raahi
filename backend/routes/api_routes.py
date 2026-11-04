@@ -1,6 +1,9 @@
 from flask import jsonify, request
 from flask_login import current_user, login_required
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 
+from backend.database.extensions import db
 from backend.services.air_quality_service import get_current_aqi_snapshot
 from backend.services.bus_fare_service import bus_fare_calculator
 from backend.services.ml_advisory_service import advisory_service
@@ -8,6 +11,26 @@ from backend.services.trip_service import save_trip_for_user
 
 
 def register_api_routes(app):
+    @app.route("/health", methods=["GET"])
+    @app.route("/api/health", methods=["GET"])
+    def health_check():
+        db_connected = False
+        try:
+            db.session.execute(text("SELECT 1"))
+            db_connected = True
+        except Exception:
+            try:
+                db.session.rollback()
+            except Exception:
+                pass
+
+        payload = {
+            "status": "healthy" if db_connected else "degraded",
+            "database_connected": db_connected,
+        }
+        status_code = 200 if db_connected else 503
+        return jsonify(payload), status_code
+
     @app.route("/api/advisory", methods=["POST"])
     def get_advisory():
         try:
@@ -39,14 +62,24 @@ def register_api_routes(app):
     @app.route("/api/save-trip", methods=["POST"])
     @login_required
     def save_trip():
+        payload = request.get_json(silent=True)
+        if not isinstance(payload, dict):
+            return jsonify({"status": "error", "message": "Invalid JSON body"}), 400
+
         try:
-            save_trip_for_user(current_user, request.get_json() or {})
+            save_trip_for_user(current_user, payload)
             return jsonify({"status": "ok", "message": "Trip saved successfully"})
+        except ValueError as exc:
+            return jsonify({"status": "error", "message": str(exc)}), 400
+        except SQLAlchemyError as exc:
+            db.session.rollback()
+            app.logger.error("Database error saving trip: %s", exc)
+            return jsonify({"status": "error", "message": "Database error while saving trip"}), 500
         except Exception as exc:
-            return jsonify({"status": "error", "message": str(exc)}), 500
+            app.logger.error("Unexpected error saving trip: %s", exc)
+            return jsonify({"status": "error", "message": "Failed to save trip"}), 500
 
     @app.route("/api/current-aqi", methods=["GET"])
     def current_aqi():
         payload = get_current_aqi_snapshot()
-        status_code = 200 if payload.get("status") == "success" else 500
-        return jsonify(payload), status_code
+        return jsonify(payload), 200

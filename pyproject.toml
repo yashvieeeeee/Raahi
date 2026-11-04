@@ -5,6 +5,7 @@ requires-python = ">=3.12,<3.13"
 dependencies = [
     "flask==3.0.3",
     "flask-login",
+    "flask-limiter>=3.5.0",
     "flask-sqlalchemy",
     "python-dotenv",
     "psycopg2-binary",

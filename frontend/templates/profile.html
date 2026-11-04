@@ -88,12 +88,12 @@
                     <div class="stats-grid">
                         <div class="metric-card dark">
                             <div class="meta-label">CO2 Saved</div>
-                            <div class="metric-value" data-count-to="{{ (total_co2_saved|float) / 1000 }}" data-decimals="2">{{ "%.2f"|format((total_co2_saved|float) / 1000) }}</div>
+                            <div class="metric-value" data-count-to="{{ ([total_co2_saved|float, 0]|max) / 1000 }}" data-decimals="2">{{ "%.2f"|format(([total_co2_saved|float, 0]|max) / 1000) }}</div>
                             <div class="metric-label">kilograms</div>
                         </div>
                         <div class="metric-card">
                             <div class="meta-label">Money Saved</div>
-                            <div class="metric-value" data-count-to="{{ total_money_saved|float }}" data-prefix="Rs." data-decimals="0">Rs.{{ total_money_saved|round(0)|int }}</div>
+                            <div class="metric-value" data-count-to="{{ [total_money_saved|float, 0]|max }}" data-prefix="Rs." data-decimals="0">Rs.{{ [total_money_saved|float, 0]|max|round(0)|int }}</div>
                             <div class="metric-label">rupees</div>
                         </div>
                         <div class="metric-card">
@@ -129,16 +129,16 @@
                     </div>
                     <div class="progress-list">
                         <div>
-                            <div class="row"><span>CO2 reduction target</span><span class="mono">{{ ((total_co2_saved / 1000) * 100)|round(1) }}%</span></div>
-                            <div class="progress-track"><div class="progress-fill" data-progress="{{ [(total_co2_saved / 1000) * 100, 100]|min }}"></div></div>
+                            <div class="row"><span>CO2 reduction target</span><span class="mono">{{ [([((total_co2_saved|float) / 1000) * 100, 0]|max)|round(1), 100]|min }}%</span></div>
+                            <div class="progress-track"><div class="progress-fill" data-progress="{{ [([((total_co2_saved|float) / 1000) * 100, 0]|max), 100]|min }}"></div></div>
                         </div>
                         <div>
                             <div class="row"><span>Eco trip target</span><span class="mono">{{ ((user.trips_taken / 50) * 100)|round(1) }}%</span></div>
                             <div class="progress-track"><div class="progress-fill success" data-progress="{{ [(user.trips_taken / 50) * 100, 100]|min }}"></div></div>
                         </div>
                         <div>
-                            <div class="row"><span>Money savings target</span><span class="mono">{{ ((total_money_saved / 500) * 100)|round(1) }}%</span></div>
-                            <div class="progress-track"><div class="progress-fill warning" data-progress="{{ [(total_money_saved / 500) * 100, 100]|min }}"></div></div>
+                            <div class="row"><span>Money savings target</span><span class="mono">{{ [([((total_money_saved|float) / 500) * 100, 0]|max)|round(1), 100]|min }}%</span></div>
+                            <div class="progress-track"><div class="progress-fill warning" data-progress="{{ [([((total_money_saved|float) / 500) * 100, 0]|max), 100]|min }}"></div></div>
                         </div>
                     </div>
                 </article>
