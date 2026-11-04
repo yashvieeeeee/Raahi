@@ -70,5 +70,4 @@ def register_api_routes(app):
     @app.route("/api/current-aqi", methods=["GET"])
     def current_aqi():
         payload = get_current_aqi_snapshot()
-        status_code = 200 if payload.get("status") == "success" else 500
-        return jsonify(payload), status_code
+        return jsonify(payload), 200
