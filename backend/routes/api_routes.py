@@ -1,6 +1,8 @@
 from flask import jsonify, request
 from flask_login import current_user, login_required
+from sqlalchemy import text
 
+from backend.database.extensions import db
 from backend.services.air_quality_service import get_current_aqi_snapshot
 from backend.services.bus_fare_service import bus_fare_calculator
 from backend.services.ml_advisory_service import advisory_service
@@ -8,6 +10,26 @@ from backend.services.trip_service import save_trip_for_user
 
 
 def register_api_routes(app):
+    @app.route("/health", methods=["GET"])
+    @app.route("/api/health", methods=["GET"])
+    def health_check():
+        db_connected = False
+        try:
+            db.session.execute(text("SELECT 1"))
+            db_connected = True
+        except Exception:
+            try:
+                db.session.rollback()
+            except Exception:
+                pass
+
+        payload = {
+            "status": "healthy" if db_connected else "degraded",
+            "database_connected": db_connected,
+        }
+        status_code = 200 if db_connected else 503
+        return jsonify(payload), status_code
+
     @app.route("/api/advisory", methods=["POST"])
     def get_advisory():
         try:
