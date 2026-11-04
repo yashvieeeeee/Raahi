@@ -48,7 +48,10 @@ def register_auth_routes(app):
             flash("Email/phone and password required")
             return redirect(url_for("auth", view="login"))
 
-        user = authenticate_user(email_or_phone, password)
+        user, error = authenticate_user(email_or_phone, password)
+        if error:
+            flash(error)
+            return redirect(url_for("auth", view="login"))
         if user is None:
             flash("Invalid credentials")
             return redirect(url_for("auth", view="login"))

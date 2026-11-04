@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}500 - Server Error - Raahi{% endblock %}
+{% block page_name %}error-500{% endblock %}
+
+{% block content %}
+<main class="location-shell">
+    <div class="shell" style="max-width: 600px; margin: 80px auto; text-align: center;">
+        <div class="surface-card stack" style="padding: 40px;">
+            <div class="eyebrow" style="color: var(--color-warning);">500 Error</div>
+            <h1 class="page-title">Service Temporarily Unavailable</h1>
+            <p class="muted">
+                Raahi encountered an unexpected issue while processing your request. Our systems are working to recover. Please try again shortly.
+            </p>
+            <div class="inline-actions" style="justify-content: center; margin-top: 24px;">
+                <a href="/" class="btn-primary">Return to Home</a>
+                <a href="/auth" class="btn-secondary">Back to Login</a>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

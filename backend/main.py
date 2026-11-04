@@ -4,8 +4,9 @@ import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
-from flask import Flask
+from flask import Flask, jsonify, render_template, request
 from sqlalchemy.exc import SQLAlchemyError
+from werkzeug.exceptions import HTTPException
 
 
 if __package__ in {None, ""}:
@@ -46,6 +47,36 @@ def create_app():
     register_api_routes(app)
     register_admin_routes(app)
     app.register_blueprint(ml_blueprint)
+
+    @app.errorhandler(500)
+    @app.errorhandler(Exception)
+    def handle_500_error(error):
+        if isinstance(error, HTTPException) and error.code != 500:
+            return error
+
+        try:
+            db.session.rollback()
+        except Exception:
+            pass
+
+        app.logger.error("Internal Server Error: %s", error, exc_info=True)
+
+        if request.path.startswith("/api/"):
+            return jsonify({
+                "status": "error",
+                "message": "An internal server error occurred. Please try again later."
+            }), 500
+
+        try:
+            return render_template("500.html"), 500
+        except Exception:
+            return (
+                "<!DOCTYPE html><html><head><title>500 - Server Error</title></head>"
+                "<body style='font-family:sans-serif;text-align:center;padding:50px;'>"
+                "<h1>Service Temporarily Unavailable</h1>"
+                "<p>Raahi is experiencing a temporary issue. Please try again shortly.</p>"
+                "<a href='/'>Return to Home</a></body></html>"
+            ), 500
 
     with app.app_context():
         try:
