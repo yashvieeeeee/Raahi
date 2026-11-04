@@ -1,0 +1,8 @@
+# Optional dependencies for local ML model training and data science pipelines
+# These packages exceed Vercel serverless bundle limits and are not required for web app runtime
+pandas==2.2.2
+numpy==1.26.4
+scikit-learn==1.5.1
+joblib==1.4.2
+folium==0.17.0
+xgboost>=2.0.0
