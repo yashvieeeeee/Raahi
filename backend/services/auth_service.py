@@ -26,7 +26,17 @@ def _normalize_identity(value):
 
 
 def register_user(name, email_or_phone, password):
+    clean_name = (name or "").strip()
+    if not clean_name:
+        return None, "Full name is required"
+
     normalized_identity = _normalize_identity(email_or_phone)
+    if not normalized_identity:
+        return None, "Email or phone number is required"
+
+    if not password or len(password) < 8:
+        return None, "Password must be at least 8 characters long"
+
     admin_email, _ = _get_admin_credentials()
 
     if admin_email and normalized_identity == admin_email:
@@ -40,7 +50,7 @@ def register_user(name, email_or_phone, password):
             return None, "Email or phone already registered"
 
         user = User(
-            name=(name or "").strip(),
+            name=clean_name,
             email=normalized_identity if "@" in normalized_identity else None,
             phone=normalized_identity if "@" not in normalized_identity else None,
             password_hash=generate_password_hash(password),

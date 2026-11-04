@@ -25,12 +25,16 @@ def register_auth_routes(app):
     @app.route("/auth/register", methods=["POST"])
     @limiter.limit("5 per minute")
     def register():
-        name = request.form.get("name")
-        email_or_phone = request.form.get("email_or_phone")
-        password = request.form.get("password")
+        name = (request.form.get("name") or "").strip()
+        email_or_phone = (request.form.get("email_or_phone") or "").strip()
+        password = request.form.get("password") or ""
 
         if not name or not email_or_phone or not password:
             flash("All fields are required")
+            return redirect(url_for("auth", view="register"))
+
+        if len(password) < 8:
+            flash("Password must be at least 8 characters long")
             return redirect(url_for("auth", view="register"))
 
         user, error = register_user(name, email_or_phone, password)

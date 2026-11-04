@@ -1,6 +1,7 @@
 from flask import jsonify, request
 from flask_login import current_user, login_required
 from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 
 from backend.database.extensions import db
 from backend.services.air_quality_service import get_current_aqi_snapshot
@@ -61,11 +62,22 @@ def register_api_routes(app):
     @app.route("/api/save-trip", methods=["POST"])
     @login_required
     def save_trip():
+        payload = request.get_json(silent=True)
+        if not isinstance(payload, dict):
+            return jsonify({"status": "error", "message": "Invalid JSON body"}), 400
+
         try:
-            save_trip_for_user(current_user, request.get_json() or {})
+            save_trip_for_user(current_user, payload)
             return jsonify({"status": "ok", "message": "Trip saved successfully"})
+        except ValueError as exc:
+            return jsonify({"status": "error", "message": str(exc)}), 400
+        except SQLAlchemyError as exc:
+            db.session.rollback()
+            app.logger.error("Database error saving trip: %s", exc)
+            return jsonify({"status": "error", "message": "Database error while saving trip"}), 500
         except Exception as exc:
-            return jsonify({"status": "error", "message": str(exc)}), 500
+            app.logger.error("Unexpected error saving trip: %s", exc)
+            return jsonify({"status": "error", "message": "Failed to save trip"}), 500
 
     @app.route("/api/current-aqi", methods=["GET"])
     def current_aqi():
