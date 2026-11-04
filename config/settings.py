@@ -79,6 +79,20 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     TEMPLATES_AUTO_RELOAD = True
 
+    # Cookie and Session Security Settings
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = "Lax"
+    SESSION_COOKIE_SECURE = bool(
+        os.getenv("VERCEL")
+        or os.getenv("RENDER")
+        or os.getenv("FLASK_ENV") == "production"
+        or os.getenv("ENVIRONMENT") == "production"
+        or os.getenv("SESSION_COOKIE_SECURE", "").lower() in {"1", "true", "yes"}
+    )
+    REMEMBER_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_SAMESITE = "Lax"
+    REMEMBER_COOKIE_SECURE = SESSION_COOKIE_SECURE
+
     GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY", "")
     OPENAQ_API_KEY = os.getenv("OPENAQ_API_KEY", "")
     WAQI_API_TOKEN = os.getenv("WAQI_API_TOKEN", "")
