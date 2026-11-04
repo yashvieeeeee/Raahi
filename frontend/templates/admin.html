@@ -356,7 +356,7 @@
                                 <td>{{ ui.status_badge("Admin", "info") if user.is_admin else ui.status_badge("Member", "success") }}</td>
                                 <td>{{ user.joined_date.strftime('%Y-%m-%d') if user.joined_date else 'N/A' }}</td>
                                 <td>{{ user.trips_taken or 0 }}</td>
-                                <td>{{ "%.2f"|format((user.co2_saved or 0) / 1000) }} kg</td>
+                                <td>{{ "%.2f"|format(([user.co2_saved|float, 0]|max) / 1000) }} kg</td>
                                 <td>
                                     {{ ui.status_badge("Location enabled", "success") if user.location_enabled else ui.status_badge("Limited setup", "warning") }}
                                 </td>

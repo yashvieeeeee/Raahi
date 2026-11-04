@@ -89,8 +89,8 @@
 
             <section class="stats-grid">
                 {{ ui.metric_card("Air Quality", aqi_data.aqi, aqi_data.location, "dark", delta=aqi_data.quality, progress=(aqi_data.aqi / 200 * 100), tooltip="Live AQI snapshot for your detected area.") }}
-                {{ ui.metric_card("CO2 Saved", "%.2f"|format((user.co2_saved|float) / 1000), "kg avoided across your eco choices", progress=[((user.co2_saved|float) / 20000) * 100, 100]|min, delta="Up this week", tooltip="Computed against the baseline auto trip used by the backend.") }}
-                {{ ui.metric_card("Money Saved", "Rs." ~ (user.money_saved|round(0)|int), "across all saved trips", progress=[((user.money_saved|float) / 2000) * 100, 100]|min, delta="Budget wins", tooltip="Savings are compared against the same auto baseline trip.") }}
+                {{ ui.metric_card("CO2 Saved", "%.2f"|format(([user.co2_saved|float, 0]|max) / 1000), "kg avoided across your eco choices", progress=[(([user.co2_saved|float, 0]|max) / 20000) * 100, 100]|min, delta="Up this week", tooltip="Computed against the baseline auto trip used by the backend.") }}
+                {{ ui.metric_card("Money Saved", "Rs." ~ ([user.money_saved|float, 0]|max|round(0)|int), "across all saved trips", progress=[(([user.money_saved|float, 0]|max) / 2000) * 100, 100]|min, delta="Budget wins", tooltip="Savings are compared against the same auto baseline trip.") }}
                 {{ ui.metric_card("Eco Trips", user.trips_taken, monthly_trip_count ~ " logged this month", progress=[((user.trips_taken|int) / 50) * 100, 100]|min, delta="Momentum", tooltip="Completed trip logs that contribute to your impact dashboard.") }}
             </section>
 

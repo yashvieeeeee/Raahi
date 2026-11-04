@@ -174,7 +174,8 @@ def _build_commute_signals(user, aqi_data: dict, monthly_trips: list[Trip]) -> l
     )
     aqi = int(aqi_data.get("aqi", 0) or 0)
     aqi_readiness = max(8, min(100, round(100 - ((aqi - 40) / 160) * 100)))
-    savings_pace = min(round((float(user.co2_saved or 0) / 20000) * 100), 100)
+    co2_saved_val = max(0.0, float(user.co2_saved or 0))
+    savings_pace = max(0, min(round((co2_saved_val / 20000) * 100), 100))
     weekly_pulse = min(round((weekly_trips / 10) * 100), 100)
     budget_efficiency = max(12, min(100, round(100 - min(avg_trip_cost, 120))))
 
@@ -195,7 +196,7 @@ def _build_commute_signals(user, aqi_data: dict, monthly_trips: list[Trip]) -> l
         },
         {
             "label": "CO2 savings pace",
-            "value": f"{round(float(user.co2_saved or 0) / 1000, 2)} kg",
+            "value": f"{round(co2_saved_val / 1000, 2)} kg",
             "progress": savings_pace,
             "tone": "success",
             "meta": "Progress toward the current personal impact target.",
