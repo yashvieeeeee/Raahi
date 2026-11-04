@@ -151,6 +151,65 @@ copy .env.example .env
 python -m backend.main
 ```
 
+## Post-Deployment Smoke Test Checklist
+
+After deploying to Vercel (or updating environment variables), verify system health and resilience using the following automated curl checklist:
+
+```bash
+# Set your deployment target base URL (local or production)
+BASE_URL="https://raahi-wine.vercel.app"
+
+# 1. Platform Landing Page
+curl -I -s "$BASE_URL/" | head -n 1
+# Expected: HTTP/2 200 (or HTTP/1.1 200 OK)
+
+# 2. Authentication View
+curl -I -s "$BASE_URL/auth" | head -n 1
+# Expected: HTTP/2 200
+
+# 3. Live Health & Database Connection Ping
+curl -s "$BASE_URL/health"
+# Expected: {"database_connected":true,"status":"healthy"} (HTTP 200)
+
+# 4. Air Quality Snapshot (Resilient WAQI Primary + Stale Cache Fallback)
+curl -s "$BASE_URL/api/current-aqi"
+# Expected: {"aqi":...,"city":"Mumbai","quality":...,"stale":...} (HTTP 200)
+
+# 5. Western Line Transit Stations
+curl -s "$BASE_URL/api/stations"
+# Expected: Array of 27 Mumbai Western Line stations (HTTP 200)
+
+# 6. Embedded Mumbai BEST Bus Depots (Zero Pandas Dependency)
+curl -s "$BASE_URL/api/bus-depots"
+# Expected: {"depots":[...],"success":true} (HTTP 200 with 20 verified depots)
+
+# 7. User Registration & Session Cookie Validation
+curl -i -s -c cookies.txt -X POST "$BASE_URL/auth/register" \
+  -d "name=Commuter Test" \
+  -d "email_or_phone=smoke_test_user@raahi.local" \
+  -d "password=SecurePassword123!" | head -n 10
+# Expected: HTTP 302 redirecting to /location-permission with session cookie set
+
+# 8. User Login with Session
+curl -i -s -c cookies.txt -X POST "$BASE_URL/auth/login" \
+  -d "email_or_phone=smoke_test_user@raahi.local" \
+  -d "password=SecurePassword123!" | head -n 10
+# Expected: HTTP 302 redirecting to /home
+
+# 9. Save Trip Input Validation (Negative Test - Expects 400 Bad Request)
+curl -s -b cookies.txt -X POST "$BASE_URL/api/save-trip" \
+  -H "Content-Type: application/json" \
+  -d '{"mode":"Bus","distance_km":-5}'
+# Expected: {"message":"Invalid destination: non-empty string under 255 characters required","status":"error"} (HTTP 400)
+
+# 10. Rate Limiter Validation (Rapid Requests Trigger 429)
+for i in {1..7}; do
+  curl -s -o /dev/null -w "%{http_code}\n" -X POST "$BASE_URL/auth/login" \
+    -d "email_or_phone=bad@test.local" -d "password=wrong"
+done
+# Expected: First 5 return 302, 6th and 7th return 429 Too Many Requests
+```
+
 ## License
 
 MIT License - see LICENSE for details.
