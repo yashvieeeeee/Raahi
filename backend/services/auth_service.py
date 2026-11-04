@@ -10,8 +10,12 @@ from backend.services.notification_service import notification_service
 
 logger = logging.getLogger(__name__)
 
-ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "admin@raahi.local").strip().lower()
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "")
+
+def _get_admin_credentials() -> tuple[str, str]:
+    """Retrieve admin credentials from environment, requiring non-empty ADMIN_PASSWORD."""
+    email = os.getenv("ADMIN_EMAIL", "admin@raahi.local").strip().lower()
+    password = os.getenv("ADMIN_PASSWORD", "").strip()
+    return email, password
 
 
 def _normalize_identity(value):
@@ -23,8 +27,9 @@ def _normalize_identity(value):
 
 def register_user(name, email_or_phone, password):
     normalized_identity = _normalize_identity(email_or_phone)
+    admin_email, _ = _get_admin_credentials()
 
-    if ADMIN_EMAIL and normalized_identity == ADMIN_EMAIL:
+    if admin_email and normalized_identity == admin_email:
         return None, "Admin account cannot be registered from signup"
 
     try:
@@ -58,25 +63,38 @@ def register_user(name, email_or_phone, password):
 
 def authenticate_user(email_or_phone, password):
     normalized_identity = _normalize_identity(email_or_phone)
+    admin_email, admin_password = _get_admin_credentials()
 
     try:
-        if ADMIN_EMAIL and ADMIN_PASSWORD and normalized_identity == ADMIN_EMAIL and password == ADMIN_PASSWORD:
-            admin_user = User.query.filter_by(email=ADMIN_EMAIL).first()
+        # Check if login attempt is for admin identity
+        if admin_email and normalized_identity == admin_email:
+            if not admin_password:
+                logger.error(
+                    "Admin login attempted for '%s' but ADMIN_PASSWORD is not set in the environment.",
+                    admin_email,
+                )
+                return None, "Admin login is disabled because ADMIN_PASSWORD is not set in environment."
+
+            if password != admin_password:
+                return None, "Invalid credentials"
+
+            admin_user = User.query.filter_by(email=admin_email).first()
             if not admin_user:
                 admin_user = User(
                     name="Admin",
-                    email=ADMIN_EMAIL,
-                    password_hash=generate_password_hash(ADMIN_PASSWORD),
+                    email=admin_email,
+                    password_hash=generate_password_hash(admin_password),
                     is_admin=True,
                 )
                 db.session.add(admin_user)
                 db.session.commit()
-            elif not admin_user.is_admin:
+            elif not admin_user.is_admin or not check_password_hash(admin_user.password_hash, admin_password):
                 admin_user.is_admin = True
-                admin_user.password_hash = generate_password_hash(ADMIN_PASSWORD)
+                admin_user.password_hash = generate_password_hash(admin_password)
                 db.session.commit()
             return admin_user, None
 
+        # Standard commuter user authentication
         user = User.query.filter(
             (User.email == normalized_identity) | (User.phone == normalized_identity)
         ).first()
