@@ -1,6 +1,7 @@
 from flask import flash, redirect, render_template, request, session, url_for
 from flask_login import login_required, login_user, logout_user
 
+from backend.database.extensions import limiter
 from backend.services.auth_service import authenticate_user, register_user
 
 
@@ -22,6 +23,7 @@ def register_auth_routes(app):
         )
 
     @app.route("/auth/register", methods=["POST"])
+    @limiter.limit("5 per minute")
     def register():
         name = request.form.get("name")
         email_or_phone = request.form.get("email_or_phone")
@@ -40,6 +42,7 @@ def register_auth_routes(app):
         return redirect(url_for("location_permission"))
 
     @app.route("/auth/login", methods=["POST"])
+    @limiter.limit("5 per minute")
     def login():
         email_or_phone = request.form.get("email_or_phone")
         password = request.form.get("password")

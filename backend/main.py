@@ -48,6 +48,24 @@ def create_app():
     register_admin_routes(app)
     app.register_blueprint(ml_blueprint)
 
+    @app.errorhandler(429)
+    def handle_429_error(error):
+        description = getattr(error, "description", "Too many requests. Please slow down.")
+        if request.path.startswith("/api/"):
+            return jsonify({
+                "status": "error",
+                "message": f"Rate limit exceeded: {description}"
+            }), 429
+
+        return (
+            "<!DOCTYPE html><html><head><title>429 - Too Many Requests</title></head>"
+            "<body style='font-family:sans-serif;text-align:center;padding:50px;'>"
+            "<h1>Too Many Requests</h1>"
+            f"<p>{description}</p>"
+            "<p>Please wait a moment and try again.</p>"
+            "<a href='/'>Return to Home</a></body></html>"
+        ), 429
+
     @app.errorhandler(500)
     @app.errorhandler(Exception)
     def handle_500_error(error):

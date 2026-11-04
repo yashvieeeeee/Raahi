@@ -1,5 +1,6 @@
 flask==3.0.3
 flask-login
+flask-limiter>=3.5.0
 flask-sqlalchemy
 python-dotenv
 psycopg2-binary

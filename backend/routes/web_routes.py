@@ -3,7 +3,7 @@ import math
 from flask import jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
-from backend.database.extensions import db
+from backend.database.extensions import db, limiter
 from backend.database.models import Trip
 from backend.services.air_quality_service import get_aqi_for_user
 from backend.services.home_service import build_home_dashboard_context
@@ -88,6 +88,7 @@ def register_web_routes(app):
 
     @app.route("/route-planner")
     @login_required
+    @limiter.limit("20 per minute")
     def route_planner():
         destination = request.args.get("dest")
         if not destination:
