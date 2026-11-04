@@ -99,6 +99,33 @@ scripts/      Utility and database scripts
 tests/        Test files
 ```
 
+## Configuration & Environment Variables
+
+Raahi reads all runtime settings from environment variables (or a local `.env` / `.env.local` file). A template is available in [`.env.example`](.env.example).
+
+### Required & Optional Variables
+
+| Variable | Requirement | Default / Fallback | Description & Security Notes |
+| :--- | :--- | :--- | :--- |
+| `SECRET_KEY` | **Required (Prod)** | Dev warning in debug | Session encryption secret. Must be a secure random 32+ byte hex string. The app raises a fatal `RuntimeError` at startup in production if unset or default. Generate with `python -c "import secrets; print(secrets.token_hex(32))"`. |
+| `DATABASE_URL` | **Required (Prod)** | SQLite (`instance/raahi.db`) | PostgreSQL connection URI (`postgresql://user:pass@host:5432/dbname`). Automatically normalizes legacy `postgres://` schemes and enables connection pool pre-pinging. **Mandatory in production** as serverless environments (e.g. Vercel) have read-only filesystems. |
+| `ADMIN_EMAIL` | **Required** | `admin@raahi.local` | Email address reserved for admin dashboard sign-in. Blocked from public registration. |
+| `ADMIN_PASSWORD` | **Required** | None (disabled) | High-entropy password for admin dashboard access. Admin authentication is strictly disabled if this variable is empty or unset. |
+| `WAQI_API_TOKEN` | Optional | Regional fallback | World Air Quality Index API token for live Mumbai air quality monitoring. Get a free token at [aqicn.org/api](https://aqicn.org/api/). Falls back gracefully to cached sensor snapshots if omitted. |
+| `GOOGLE_MAPS_API_KEY` | Optional | OSRM + Presets | Google Maps Directions & Geocoding API key. If omitted or quota-denied (`REQUEST_DENIED`), automatically falls back to OSRM routing and Mumbai landmark presets without crashing. |
+| `RATELIMIT_STORAGE_URI` | Optional | `memory://` | Storage backend for `Flask-Limiter`. Defaults to in-memory tracking. Set to `redis://...` for distributed/clustered deployments. |
+| `FLASK_ENV` | Optional | `development` | Set to `production` in live deployments to activate strict security checks and secure cookie flags. |
+
+### Generating Secrets
+
+```bash
+# Generate a cryptographic SECRET_KEY
+python -c "import secrets; print(secrets.token_hex(32))"
+
+# Copy the environment template
+copy .env.example .env
+```
+
 ## Getting Started
 
 ### 1. Frontend
