@@ -3,12 +3,18 @@
     const stack = document.getElementById("toast-stack");
 
     const showToast = (message) => {
-        if (!stack) return;
+        let toastStack = document.getElementById("toast-stack");
+        if (!toastStack) {
+            toastStack = document.createElement("div");
+            toastStack.id = "toast-stack";
+            toastStack.className = "toast-stack";
+            document.body.appendChild(toastStack);
+        }
         const item = document.createElement("div");
         item.className = "toast";
         item.textContent = message;
-        stack.appendChild(item);
-        window.setTimeout(() => item.remove(), 3200);
+        toastStack.appendChild(item);
+        window.setTimeout(() => item.remove(), 4000);
     };
 
     const gramsToKg = (value) => (Number(value || 0) / 1000).toFixed(2);
@@ -344,7 +350,7 @@
                         
                         // Save detected location to backend
                         try {
-                            await fetch("/save-location", {
+                            const res = await fetch("/save-location", {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },
                                 body: JSON.stringify({
@@ -352,8 +358,17 @@
                                     longitude: userLon
                                 })
                             });
+                            if (!res.ok) {
+                                let msg = "Could not sync location with server";
+                                try {
+                                    const data = await res.json();
+                                    if (data && data.message) msg = data.message;
+                                } catch (_) {}
+                                showToast(msg);
+                            }
                         } catch (e) {
-                            console.log("Could not save detected location:", e);
+                            console.warn("Could not save detected location:", e);
+                            showToast("Network error syncing location with server");
                         }
                     },
                     () => {
@@ -385,7 +400,7 @@
                             userLat = newLat;
                             userLon = newLon;
                             try {
-                                await fetch("/save-location", {
+                                const res = await fetch("/save-location", {
                                     method: "POST",
                                     headers: { "Content-Type": "application/json" },
                                     body: JSON.stringify({
@@ -393,8 +408,12 @@
                                         longitude: userLon
                                     })
                                 });
+                                if (!res.ok) {
+                                    showToast("Failed to update location on server.");
+                                }
                             } catch (e) {
-                                console.log("Could not update location:", e);
+                                console.warn("Could not update location:", e);
+                                showToast("Network error updating location.");
                             }
                         }
                     },
@@ -621,7 +640,14 @@
                             cost: Number(card.dataset.cost)
                         })
                     });
-                    if (!response.ok) throw new Error("Trip save failed");
+                    if (!response.ok) {
+                        let errMsg = "Trip save failed";
+                        try {
+                            const errData = await response.json();
+                            if (errData && errData.message) errMsg = errData.message;
+                        } catch (_) {}
+                        throw new Error(errMsg);
+                    }
                     const query = new URLSearchParams({
                         destination: config.destination,
                         vehicle: card.dataset.vehicle,
@@ -631,7 +657,7 @@
                     });
                     window.location.href = `/map-navigation?${query.toString()}`;
                 } catch (error) {
-                    showToast("Could not save trip. Please try again.");
+                    showToast(error.message || "Could not save trip. Please try again.");
                 }
             });
         });
@@ -872,7 +898,10 @@
 
         loadModelOptions()
             .then(() => fetchMetrics(selector?.value || defaultModel))
-            .catch(() => {});
+            .catch((err) => {
+                console.warn("Failed to load ML model options or metrics:", err);
+                showToast(err.message || "Could not load ML metrics from server.");
+            });
 
         selector?.addEventListener("change", async () => {
             try {
