@@ -12,6 +12,3 @@ dependencies = [
     "gunicorn",
     "requests==2.32.3",
 ]
-
-[tool.vercel]
-entrypoint = "backend.main:app"

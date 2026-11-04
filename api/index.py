@@ -8,5 +8,5 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from backend.main import app
 
-# Vercel WSGI entrypoint
-app = app
+# Vercel entrypoint (both names supported)
+application = app
