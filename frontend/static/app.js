@@ -326,14 +326,15 @@
         const form = document.getElementById("planner-search-form");
         const dashboardDataNode = document.getElementById("home-dashboard-data");
         const dashboardData = dashboardDataNode ? JSON.parse(dashboardDataNode.textContent) : null;
-        let userLat = Number(dashboardData?.user_origin?.lat) || null;
-        let userLon = Number(dashboardData?.user_origin?.lon) || null;
-        
-        // Use default Mumbai location only if no saved location
         const defaultLat = 19.0760;
         const defaultLon = 72.8777;
+        const savedLat = Number(dashboardData?.user_origin?.lat);
+        const savedLon = Number(dashboardData?.user_origin?.lon);
+        let userLat = (!isNaN(savedLat) && savedLat !== 0) ? savedLat : defaultLat;
+        let userLon = (!isNaN(savedLon) && savedLon !== 0) ? savedLon : defaultLon;
+        const hasSavedLocation = Boolean(dashboardData?.user_origin?.lat && dashboardData?.user_origin?.lon);
 
-        if (!userLat || !userLon) {
+        if (!hasSavedLocation) {
             // Try to detect browser location if not already saved
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
@@ -462,10 +463,12 @@
             event.preventDefault();
             const input = document.getElementById("destination-input");
             if (!input || !input.value.trim()) return;
+            const validLat = (userLat !== null && !isNaN(Number(userLat))) ? userLat : defaultLat;
+            const validLon = (userLon !== null && !isNaN(Number(userLon))) ? userLon : defaultLon;
             const query = new URLSearchParams({
                 dest: input.value.trim(),
-                lat: userLat,
-                lon: userLon
+                lat: validLat,
+                lon: validLon
             });
             window.location.href = `/route-planner?${query.toString()}`;
         });
@@ -637,10 +640,12 @@
             event.preventDefault();
             const input = document.getElementById("new-destination-input");
             if (!input || !input.value.trim() || !config) return;
+            const validLat = (config.user_lat !== null && !isNaN(Number(config.user_lat))) ? config.user_lat : 19.0760;
+            const validLon = (config.user_lon !== null && !isNaN(Number(config.user_lon))) ? config.user_lon : 72.8777;
             const query = new URLSearchParams({
                 dest: input.value.trim(),
-                lat: config.user_lat,
-                lon: config.user_lon
+                lat: validLat,
+                lon: validLon
             });
             window.location.href = `/route-planner?${query.toString()}`;
         });
