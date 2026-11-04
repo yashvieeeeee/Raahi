@@ -1,5 +1,7 @@
 """Bus fare calculator for Mumbai BEST buses."""
 
+from __future__ import annotations
+
 import math
 
 try:
@@ -9,10 +11,34 @@ except ImportError:
 
 from raahi_ml.config.paths import RAW_DATA_DIR
 
+# Embedded verified Mumbai BEST bus depots (ensures zero pandas/file dependency on serverless)
+DEFAULT_MUMBAI_BUS_DEPOTS: list[dict] = [
+    {"name": "Colaba Bus Station", "geo_lat": 18.9147, "geo_long": 72.8258, "zone": "South Mumbai"},
+    {"name": "Backbay Depot", "geo_lat": 18.9220, "geo_long": 72.8214, "zone": "South Mumbai"},
+    {"name": "Mumbai Central Depot", "geo_lat": 18.9712, "geo_long": 72.8197, "zone": "South Mumbai"},
+    {"name": "Worli Depot", "geo_lat": 19.0144, "geo_long": 72.8182, "zone": "South Mumbai"},
+    {"name": "Wadala Depot", "geo_lat": 19.0225, "geo_long": 72.8584, "zone": "Central Mumbai"},
+    {"name": "Dadar Bus Station", "geo_lat": 19.0178, "geo_long": 72.8478, "zone": "Central Mumbai"},
+    {"name": "Dharavi Depot", "geo_lat": 19.0435, "geo_long": 72.8562, "zone": "Central Mumbai"},
+    {"name": "Bandra Bus Station", "geo_lat": 19.0544, "geo_long": 72.8402, "zone": "Western Suburbs"},
+    {"name": "Santacruz Depot", "geo_lat": 19.0833, "geo_long": 72.8417, "zone": "Western Suburbs"},
+    {"name": "Andheri West Depot", "geo_lat": 19.1197, "geo_long": 72.8464, "zone": "Western Suburbs"},
+    {"name": "Goregaon Bus Station", "geo_lat": 19.1553, "geo_long": 72.8492, "zone": "Western Suburbs"},
+    {"name": "Dindoshi Depot", "geo_lat": 19.1742, "geo_long": 72.8604, "zone": "Western Suburbs"},
+    {"name": "Poisar (Kandivali) Depot", "geo_lat": 19.2062, "geo_long": 72.8532, "zone": "Western Suburbs"},
+    {"name": "Kurla Depot", "geo_lat": 19.0688, "geo_long": 72.8797, "zone": "Eastern Suburbs"},
+    {"name": "Ghatkopar Depot", "geo_lat": 19.0860, "geo_long": 72.9090, "zone": "Eastern Suburbs"},
+    {"name": "Vikhroli Depot", "geo_lat": 19.1112, "geo_long": 72.9281, "zone": "Eastern Suburbs"},
+    {"name": "Mulund Depot", "geo_lat": 19.1765, "geo_long": 72.9555, "zone": "Eastern Suburbs"},
+    {"name": "Deonar Depot", "geo_lat": 19.0522, "geo_long": 72.9125, "zone": "Eastern Suburbs"},
+    {"name": "Majas (Jogeshwari) Depot", "geo_lat": 19.1354, "geo_long": 72.8682, "zone": "Western Suburbs"},
+    {"name": "Borivali Station Depot", "geo_lat": 19.2288, "geo_long": 72.8541, "zone": "Western Suburbs"},
+]
+
 
 class BusFareCalculator:
     def __init__(self):
-        self.bus_depots = None
+        self.bus_depots: list[dict] = []
         self.fare_structure = {
             "ordinary": {
                 "base_fare": 5.0,
@@ -42,15 +68,17 @@ class BusFareCalculator:
         self.load_bus_depots()
 
     def load_bus_depots(self):
-        if pd is None:
-            self.bus_depots = []
-            return
-
-        try:
-            self.bus_depots = pd.read_csv(RAW_DATA_DIR / "bus_depots.csv")
-        except Exception as exc:
-            print(f"Error loading bus depots: {exc}")
-            self.bus_depots = pd.DataFrame()
+        depots = list(DEFAULT_MUMBAI_BUS_DEPOTS)
+        if pd is not None:
+            csv_path = RAW_DATA_DIR / "bus_depots.csv"
+            if csv_path.exists():
+                try:
+                    df = pd.read_csv(csv_path)
+                    if not df.empty:
+                        depots = df.to_dict("records")
+                except Exception as exc:
+                    print(f"Error loading bus depots from CSV: {exc}")
+        self.bus_depots = depots
 
     def calculate_distance(self, lat1, lon1, lat2, lon2):
         if lat1 is None or lon1 is None or lat2 is None or lon2 is None:
@@ -72,19 +100,24 @@ class BusFareCalculator:
         return earth_radius_km * c
 
     def find_nearest_depot(self, lat, lon):
-        if pd is None or self.bus_depots.empty or lat is None or lon is None:
+        if not self.bus_depots or lat is None or lon is None:
             return None
 
         min_distance = float("inf")
         nearest_depot = None
 
-        for _, depot in self.bus_depots.iterrows():
-            distance = self.calculate_distance(lat, lon, depot["geo_lat"], depot["geo_long"])
+        for depot in self.bus_depots:
+            depot_lat = depot.get("geo_lat")
+            depot_lon = depot.get("geo_long")
+            if depot_lat is None or depot_lon is None:
+                continue
+            distance = self.calculate_distance(lat, lon, float(depot_lat), float(depot_lon))
             if distance < min_distance:
                 min_distance = distance
-                nearest_depot = depot
+                nearest_depot = dict(depot)
+                nearest_depot["distance_km"] = round(distance, 2)
 
-        return nearest_depot.to_dict() if nearest_depot is not None else None
+        return nearest_depot
 
     def calculate_fare(self, distance_km, bus_type="ordinary"):
         if bus_type not in self.fare_structure:
@@ -144,9 +177,7 @@ class BusFareCalculator:
         }
 
     def get_all_depots(self):
-        if pd is None or self.bus_depots.empty:
-            return []
-        return self.bus_depots.to_dict("records")
+        return list(self.bus_depots)
 
 
 bus_fare_calculator = BusFareCalculator()
