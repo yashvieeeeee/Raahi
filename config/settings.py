@@ -7,6 +7,41 @@ from backend.utils.paths import FRONTEND_DIR, INSTANCE_DIR
 
 logger = logging.getLogger(__name__)
 
+INSECURE_DEFAULT_SECRET_KEYS: set[str] = {
+    "dev-only-change-me",
+    "your-secret-key-here-change-in-production",
+    "raahi-secret-key-fallback-2024",
+    "secret",
+    "changeme",
+    "",
+}
+
+
+def get_secret_key() -> str:
+    """Validate SECRET_KEY, warning loudly in dev and failing startup in production."""
+    key = os.getenv("SECRET_KEY", "").strip()
+    is_production = bool(
+        os.getenv("VERCEL")
+        or os.getenv("RENDER")
+        or os.getenv("FLASK_ENV") == "production"
+        or os.getenv("ENVIRONMENT") == "production"
+    )
+
+    if not key or key in INSECURE_DEFAULT_SECRET_KEYS:
+        msg = (
+            "SECURITY WARNING: Insecure or default SECRET_KEY is in use! "
+            "Session cookies can be forged. Generate a strong key with `secrets.token_hex(32)`."
+        )
+        if is_production:
+            raise RuntimeError(f"FATAL: Production deployment detected with insecure SECRET_KEY. {msg}")
+
+        logger.warning("!" * 78)
+        logger.warning(msg)
+        logger.warning("!" * 78)
+        return key or "dev-only-change-me"
+
+    return key
+
 
 def get_database_uri() -> str:
     """Resolve the database URI for the active environment."""
@@ -38,7 +73,7 @@ def get_engine_options(database_uri: str) -> dict:
 
 
 class Config:
-    SECRET_KEY = os.getenv("SECRET_KEY", "dev-only-change-me")
+    SECRET_KEY = get_secret_key()
     SQLALCHEMY_DATABASE_URI = get_database_uri()
     SQLALCHEMY_ENGINE_OPTIONS = get_engine_options(SQLALCHEMY_DATABASE_URI)
     SQLALCHEMY_TRACK_MODIFICATIONS = False
