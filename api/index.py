@@ -2,6 +2,7 @@ import os
 import sys
 import traceback
 from pathlib import Path
+from urllib.parse import parse_qs, urlencode
 
 # Add project root to sys.path so backend and config are importable
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -25,17 +26,14 @@ def application(environ, start_response):
         )
         return [f"Startup Initialization Error:\n\n{init_error}".encode("utf-8")]
 
-    # If Vercel rewrote the path to /api/index, restore original path if available
-    path_info = environ.get("PATH_INFO", "")
-    if path_info in {"/api/index", "/api/index/"}:
-        raw_uri = environ.get("RAW_URI", "")
-        matched_path = environ.get("HTTP_X_MATCHED_PATH", "")
-        if raw_uri and not raw_uri.startswith("/api/index"):
-            environ["PATH_INFO"] = raw_uri.split("?")[0]
-        elif matched_path and not matched_path.startswith("/api/index"):
-            environ["PATH_INFO"] = matched_path.split("?")[0]
-        else:
-            environ["PATH_INFO"] = "/"
+    # Normalize rewritten path from Vercel
+    query_string = environ.get("QUERY_STRING", "")
+    if "__path" in query_string:
+        params = parse_qs(query_string, keep_blank_values=True)
+        if "__path" in params:
+            raw_path = params.pop("__path", [""])[0]
+            environ["PATH_INFO"] = "/" + raw_path.lstrip("/")
+            environ["QUERY_STRING"] = urlencode(params, doseq=True)
 
     try:
         return flask_app(environ, start_response)
