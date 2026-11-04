@@ -99,7 +99,7 @@ def create_app():
     with app.app_context():
         try:
             db.create_all()
-        except SQLAlchemyError as exc:
+        except Exception as exc:
             app.logger.error("Database initialization failed: %s", exc)
 
     return app

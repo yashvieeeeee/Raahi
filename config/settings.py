@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
+import secrets
 
 from backend.utils.paths import FRONTEND_DIR, INSTANCE_DIR
 
@@ -18,7 +19,7 @@ INSECURE_DEFAULT_SECRET_KEYS: set[str] = {
 
 
 def get_secret_key() -> str:
-    """Validate SECRET_KEY, warning loudly in dev and failing startup in production."""
+    """Validate SECRET_KEY, warning in dev and generating a safe ephemeral fallback in production if unset."""
     key = os.getenv("SECRET_KEY", "").strip()
     is_production = bool(
         os.getenv("VERCEL")
@@ -28,13 +29,20 @@ def get_secret_key() -> str:
     )
 
     if not key or key in INSECURE_DEFAULT_SECRET_KEYS:
+        if is_production:
+            ephemeral_key = secrets.token_hex(32)
+            logger.error(
+                "CRITICAL: Production deployment detected without a persistent SECRET_KEY! "
+                "Generated an ephemeral fallback (%s...). Session cookies will not persist across "
+                "serverless cold starts. Please set SECRET_KEY in your Vercel Project Settings.",
+                ephemeral_key[:8],
+            )
+            return ephemeral_key
+
         msg = (
             "SECURITY WARNING: Insecure or default SECRET_KEY is in use! "
             "Session cookies can be forged. Generate a strong key with `secrets.token_hex(32)`."
         )
-        if is_production:
-            raise RuntimeError(f"FATAL: Production deployment detected with insecure SECRET_KEY. {msg}")
-
         logger.warning("!" * 78)
         logger.warning(msg)
         logger.warning("!" * 78)
@@ -51,12 +59,17 @@ def get_database_uri() -> str:
             database_url = database_url.replace("postgres://", "postgresql://", 1)
         return database_url
 
+    if os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME"):
+        default_sqlite = f"sqlite:///{INSTANCE_DIR / 'raahi.db'}"
+    else:
+        default_sqlite = os.getenv("SQLITE_DATABASE_URI", "sqlite:///raahi.db")
+
     logger.warning(
         "CRITICAL: DATABASE_URL environment variable is not set. Falling back to local SQLite (%s). "
-        "In production or serverless environments, this will result in database connection failures.",
-        os.getenv("SQLITE_DATABASE_URI", "sqlite:///raahi.db"),
+        "In production or serverless environments, this will result in ephemeral database storage.",
+        default_sqlite,
     )
-    return os.getenv("SQLITE_DATABASE_URI", "sqlite:///raahi.db")
+    return default_sqlite
 
 
 def get_engine_options(database_uri: str) -> dict:
