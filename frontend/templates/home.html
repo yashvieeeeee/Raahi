@@ -106,6 +106,30 @@
                     </div>
                     <form id="planner-search-form" class="stack">
                         <div class="field">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                <label for="origin-select" style="margin-bottom: 0;">Starting Location</label>
+                                <button type="button" id="btn-detect-gps" style="background: none; border: none; color: var(--color-deep); font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: var(--radius-sm); font-weight: 600;">
+                                    <span id="gps-status-indicator">📍</span> <span id="gps-status-label">Detect GPS</span>
+                                </button>
+                            </div>
+                            <select id="origin-select" name="origin_location" class="select-field">
+                                <option value="current" id="option-current-location">📍 Detecting location...</option>
+                                <optgroup label="Mumbai Key Hubs">
+                                    <option value="19.0760,72.8777">Mumbai Central / Dadar (19.076, 72.878)</option>
+                                    <option value="19.0596,72.8295">Bandra West (19.060, 72.830)</option>
+                                    <option value="19.1136,72.8697">Andheri East / Station (19.114, 72.870)</option>
+                                    <option value="18.9401,72.8347">CST / Fort (South Mumbai) (18.940, 72.835)</option>
+                                    <option value="19.0886,72.8679">BKC - Bandra Kurla Complex (19.089, 72.868)</option>
+                                    <option value="19.1765,72.8478">Malad / Goregaon (19.177, 72.848)</option>
+                                    <option value="19.2307,72.8567">Borivali West (19.231, 72.857)</option>
+                                    <option value="19.0748,72.9000">Kurla / Ghatkopar (19.075, 72.900)</option>
+                                    <option value="19.1983,72.9558">Thane West (19.198, 72.956)</option>
+                                    <option value="19.0330,73.0297">Navi Mumbai / Vashi (19.033, 73.030)</option>
+                                </optgroup>
+                            </select>
+                            <div class="helper-text" id="origin-helper-text" style="margin-top: 6px;">GPS coordinates or select your starting neighborhood above.</div>
+                        </div>
+                        <div class="field">
                             <label for="destination-input">Destination</label>
                             <input type="text" id="destination-input" placeholder="Where do you want to go in Mumbai?" list="mumbai-locations" required>
                         </div>
